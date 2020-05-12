@@ -13,7 +13,9 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 [image0]: ./camera_cal/test_image.jpg "distorted"
-[image1]: ./output_images/test_image_undistorted.png "Undistorted"
+[image1]: ./output_images/chesshboard_undistorted.png "Undistorted_board"
+[image11]: ./output_images/road_undistorted.png "Undistorted_road"
+
 [image2]: ./test_images/test1.jpg "Road Transformed"
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
@@ -36,10 +38,10 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 ### Pipeline (single images)
 
-#### 1. Provide an example of a distortion-corrected image.
+#### 1. An example of a distortion-corrected image.
 
-To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![alt text][image2]
+Then, uisng mtx, dist from calibration ('undist = cv2.undistort(img, mtx, dist, None, mtx)'), I have undistorted an image from a road:
+![alt text][image11]
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
