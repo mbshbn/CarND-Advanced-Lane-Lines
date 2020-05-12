@@ -14,7 +14,8 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 [image0]: ./camera_cal/test_image.jpg "distorted"
 [image1]: ./output_images/chesshboard_undistorted.png "Undistorted_board"
-[image11]: ./output_images/road_undistorted.png "Undistorted_road"
+[image2]: ./output_images/road_undistorted.png "Undistorted_road"
+[image3]: ./output_images/combined_binary.png "binary threshhold"
 
 [image2]: ./test_images/test1.jpg "Road Transformed"
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
@@ -33,23 +34,36 @@ The code for this step is called `Camera_calibration.py`.
 
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image. Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
-I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
+I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function. I also save these two matrixes using `np.savez` such that I can use them later. Then, I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
 ![alt text][image0] |  ![alt text][image1]
 
 ### Pipeline (single images)
 
-#### 1. An example of a distortion-corrected image.
+The code for this step is called `Line_detection_advanced.py`.  
+Initialy, it loads `mtx`, and `dist` matrices from camera calibration step.
 
-Then, uisng mtx, dist from calibration (`undist = cv2.undistort(img, mtx, dist, None, mtx)`), I have undistorted an image from a road:
-![alt text][image11]
+#### 1. Apply a distortion correction to raw images.
 
-#### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
+Uisng the saved mtx, dist from calibration, I have undistorted an image from a road:
+![alt text][image2]
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+#### 2. Create a thresholded binary image using color transforms, gradients..
+
+(TODO: Which line of code?)
+
+I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `Line_detection_advanced.py`). 
+
+For gradient thresholds, first, I converted the image into grayscale `cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)`. Note that if you are using `cv2.imread`, you should use `cv2.COLOR_BGR2GRAY`. But is you are using `matplotlib.image.imread`, you shoud use `cv2.COLOR_BGR2GRAY`. Then, I took the derivative in x direction, using `cv2.Sobel` (Why? Because vertical lines in horizontal direction can be detected well). Then, I scaled its magnitude into 8bit `255*np.absolute(sobelx)/np.max(abs_sobelx)`, and conervetd to `np.unit8`. At the end, to generate the binary mage, I used `np.zeros_like`, and applied the threshhold.
+
+For color threshhold, I used HLS colorspace using `cv2.cvtColor(img, cv2.COLOR_BGR2HLS)`. (Why? because yellow and white colors can be detected well in S space). Then, I created the binary image `np.zeros_like`, and applied the threshhold on S channel.
+
+At the end, I have combined the two binary threshholds, and here is an example of my output for this step.
 
 ![alt text][image3]
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
+
+(TODO: Which line of code?)
 
 The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
 
