@@ -35,7 +35,7 @@ for fname in images:
         #cv2.imshow('img',img)
         #cv2.waitKey(500) # waits until a key is pressed
 
-#cv2.destroyAllWindows()# destroys the window showing image
+# cv2.destroyAllWindows()# destroys the window showing image
 
 # Camera calibration, given object points, image points, and the shape of the grayscale image:
 ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
