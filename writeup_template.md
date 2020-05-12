@@ -29,7 +29,7 @@ The goals / steps of this project are the following:
 
 #### 1. Computation of the camera matrix and distortion coefficients with an example of a distortion corrected calibration image.
 
-The code for this step is called `Camera_calibration.py`).  
+The code for this step is called `Camera_calibration.py`.  
 
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image. Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
@@ -40,7 +40,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 
 #### 1. An example of a distortion-corrected image.
 
-Then, uisng mtx, dist from calibration ('undist = cv2.undistort(img, mtx, dist, None, mtx)'), I have undistorted an image from a road:
+Then, uisng mtx, dist from calibration (`undist = cv2.undistort(img, mtx, dist, None, mtx)`), I have undistorted an image from a road:
 ![alt text][image11]
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
