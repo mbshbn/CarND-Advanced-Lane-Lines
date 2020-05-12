@@ -18,6 +18,8 @@ The goals / steps of this project are the following:
 [image3]: ./output_images/combined_binary.png "binary threshhold"
 [image4]: ./output_images/image_rectangale.png "image_rectangale"
 [image5]: ./output_images/warped_image.png "warped_image"
+[image6]: ./output_images/binary_warped_line.jpg "Road yellow line"
+
 
 [image2]: ./test_images/test1.jpg "Road Transformed"
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
@@ -49,15 +51,15 @@ Initialy, it loads `mtx`, and `dist` matrices from camera calibration step.
 Uisng the saved mtx, dist from calibration, I have undistorted an image from a road:
 ![alt text][image2]
 
-#### 2. Create a thresholded binary image using color transforms, gradients..
+#### 2. Create a thresholded binary image using color transforms and gradients.
 
 (TODO: Which line of code?)
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `Line_detection_advanced.py`). 
+I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines 30 through 53 in `Line_detection_advanced.py`). 
 
-For gradient thresholds, first, I converted the image into grayscale `cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)`. Note that if you are using `cv2.imread`, you should use `cv2.COLOR_BGR2GRAY`. But is you are using `matplotlib.image.imread`, you shoud use `cv2.COLOR_BGR2GRAY`. Then, I took the derivative in x direction, using `cv2.Sobel` (Why? Because vertical lines can be detected better using gradient in the horizontal direction). Then, I scaled its magnitude into 8bit `255*np.absolute(sobelx)/np.max(abs_sobelx)`, and conervetd to `np.unit8`. At the end, to generate the binary mage, I used `np.zeros_like`, and applied the threshhold.
+For gradient thresholds, the code includes a function called `grad_thresh`. First, I converted the image into grayscale `cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)`. Note that if you are using `cv2.imread`, you should use `cv2.COLOR_BGR2GRAY`. But is you are using `matplotlib.image.imread`, you shoud use `cv2.COLOR_BGR2GRAY`. Then, I took the derivative in x direction, using `cv2.Sobel` (Why? Because vertical lines can be detected better using gradient in the horizontal direction). Then, I scaled its magnitude into 8bit `255*np.absolute(sobelx)/np.max(abs_sobelx)`, and conervetd to `np.unit8`. At the end, to generate the binary mage, I used `np.zeros_like`, and applied the threshhold.
 
-For color threshhold, I used HLS colorspace using `cv2.cvtColor(img, cv2.COLOR_BGR2HLS)`. (Why? because yellow and white colors can be detected well in S space). Then, I created the binary image `np.zeros_like`, and applied the threshhold on S channel.
+For color threshhold, the code includes a function called `color_thresh`. I used HLS colorspace using `cv2.cvtColor(img, cv2.COLOR_BGR2HLS)`. (Why? because yellow and white colors can be detected well in S space). Then, I created the binary image `np.zeros_like`, and applied the threshhold on S channel.
 
 At the end, I have combined the two binary threshholds, and here is an example of my output for this step.
 
@@ -93,11 +95,31 @@ I verified that my perspective transform was working as expected by drawing the 
 
 ![alt text][image4]
 ![alt text][image5]
-#### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+#### 4. Identify lane-line pixels and fit their positions with a polynomial
+To find lane pixels, a function called `find_lane_pixels()` is defined. First the histogram of the bottom half of the image along the vertical axis is computed usin `npsum`. 
+Then the peaks in the left half side and right half side of the historam is computed as the initial estimate of the left and right lines resectively.
+Then, the number of sliding windows `nwindows` and horizontal margin `margin` and the minimum nmber of pixels `minpix`.
 
-![alt text][image5]
+Then I defined  `for` loop.
+I start processing the bottom windows. 
+The goal is to find the horizontal position of center of left and right windows which is used to found the boundries of the next window inside the for loop. As well as recognizing left and right lines oixel poistion.
+First, the vertices of each left and right windows are computed. Then left and rectangles is plotted on the image uisng `cv2.rectangle`, and specefying two opposite vertices of a rectangle.
+Then the indices of nonzero pixels in x and y directions within the windows are determined. 
+I append them to the left and right lists of indices, uisng `np.append`. 
+If the minimum number of recognized indices in left and right lists are more than `minpix`, I update the position of center of the left and right windows.
+I continue to process the next windows which is the window above the bottom window. I continue till raach the `nwindows` which covers all the image along y axis. (TODO: really all th eimage?)
+
+after the loop ends, I concatenate the arrays of indices (previously was a list of lists of pixels), using `np.concatenate`. Finally, I extract the left and right line pixel positions as the output of `find_lane_pixels`.
+
+The next step is to fit a 2nd order polynomial uisng `np.polyfit` to the output of the prevoius function `find_lane_pixels`. 
+To do this, I defined a function called `fit_polynomial()`.
+To draw polynomials on the image, first I generate x and y values for plotting, using `np.linspace`. then use `fit[0]*ploty**2 + fit[1]*ploty + fit[2]` to have all points on the line for left and right lines. To plot them on the image, I use `plt.plot`. Also, I visualize the whole left and right windowes on the images.
+
+The output of the last function is the fllowing figure:
+(TODO: for some reason the yellow ones have not been saved)
+
+![alt text][image6]
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
