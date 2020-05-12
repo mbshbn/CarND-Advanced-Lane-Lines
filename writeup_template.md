@@ -53,7 +53,7 @@ Uisng the saved mtx, dist from calibration, I have undistorted an image from a r
 
 I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `Line_detection_advanced.py`). 
 
-For gradient thresholds, first, I converted the image into grayscale `cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)`. Note that if you are using `cv2.imread`, you should use `cv2.COLOR_BGR2GRAY`. But is you are using `matplotlib.image.imread`, you shoud use `cv2.COLOR_BGR2GRAY`. Then, I took the derivative in x direction, using `cv2.Sobel` (Why? Because vertical lines in horizontal direction can be detected well). Then, I scaled its magnitude into 8bit `255*np.absolute(sobelx)/np.max(abs_sobelx)`, and conervetd to `np.unit8`. At the end, to generate the binary mage, I used `np.zeros_like`, and applied the threshhold.
+For gradient thresholds, first, I converted the image into grayscale `cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)`. Note that if you are using `cv2.imread`, you should use `cv2.COLOR_BGR2GRAY`. But is you are using `matplotlib.image.imread`, you shoud use `cv2.COLOR_BGR2GRAY`. Then, I took the derivative in x direction, using `cv2.Sobel` (Why? Because vertical lines can be detected better using gradient in the horizontal direction). Then, I scaled its magnitude into 8bit `255*np.absolute(sobelx)/np.max(abs_sobelx)`, and conervetd to `np.unit8`. At the end, to generate the binary mage, I used `np.zeros_like`, and applied the threshhold.
 
 For color threshhold, I used HLS colorspace using `cv2.cvtColor(img, cv2.COLOR_BGR2HLS)`. (Why? because yellow and white colors can be detected well in S space). Then, I created the binary image `np.zeros_like`, and applied the threshhold on S channel.
 
