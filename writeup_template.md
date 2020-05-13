@@ -45,6 +45,9 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 |:-------------:|:-------------:|
 | 585, 460      | 320, 0        |
 
+Solarized dark             |  Solarized Ocean
+:-------------------------:|:-------------------------:
+![alt text][image0]  |  ![alt text][image0] 
 
 ### Pipeline (single images)
 
