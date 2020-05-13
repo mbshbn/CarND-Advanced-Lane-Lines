@@ -28,6 +28,7 @@ The goals / steps of this project are the following:
 [video1]: ./project_video.mp4 "Video"
 
 
+
 ---
 ### Camera Calibration
 
@@ -66,7 +67,7 @@ For color threshhold, the code includes a function called `color_thresh`. I used
 
 At the end, I have combined the two binary threshholds, and here is an example of my output for this step.
 
-![alt text][image3]
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/combined_binary.png"></p>
 
 #### 3. Perform a perspective transform.
 
@@ -96,8 +97,10 @@ This resulted in the following source and destination points:
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-![alt text][image4]
-![alt text][image5]
+Original image             |  undistorted image
+:-------------------------:|:-------------------------:
+![alt text][image4]  |  ![alt text][image5] 
+
 
 #### 4. Identify lane-line pixels and fit their positions with a polynomial
 To find lane pixels, a function called `find_lane_pixels()` is defined. First the histogram of the bottom half of the image along the vertical axis is computed usin `npsum`. 
@@ -122,7 +125,7 @@ To draw polynomials on the image, first I generate x and y values for plotting, 
 The output of the last function is the fllowing figure:
 (TODO: for some reason the yellow ones have not been saved)
 
-![alt text][image6]
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/binary_warped_line.jpg"></p>
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
