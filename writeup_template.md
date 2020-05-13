@@ -13,13 +13,12 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 [image0]: ./camera_cal/test_image.jpg "distorted"
-[image1]: ./output_images/chesshboard_undistorted.png "Undistorted_board"
+[image1]: ./output_images/chessboard_undistorted.png "Undistorted_board"
 [image2]: ./output_images/road_undistorted.png "Undistorted_road"
 [image3]: ./output_images/combined_binary.png "binary threshhold"
 [image4]: ./output_images/image_rectangale.png "image_rectangale"
 [image5]: ./output_images/warped_image.png "warped_image"
 [image6]: ./output_images/binary_warped_line.jpg "Road yellow line"
-
 
 [image2]: ./test_images/test1.jpg "Road Transformed"
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
@@ -42,6 +41,10 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 ![alt text][image0] |  ![alt text][image1]
 <p align="center">
   <img width="460" height="300" src="./camera_cal/test_image.jpg">
+</p>
+
+<p align="center">
+  <img width="460" height="300" image0">
 </p>
 
 ### Pipeline (single images)
