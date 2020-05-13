@@ -24,7 +24,7 @@ The goals / steps of this project are the following:
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[image16]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
 
 
@@ -127,20 +127,20 @@ The output of the last function is the fllowing figure:
 
 <p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/binary_warped_line.jpg"></p>
 
-#### 5. Calculat the radius of curvature of the lane and the position of the vehicle with respect to center.
+#### 5. Calculate the radius of curvature of the lane and the position of the vehicle with respect to center.
 
 I have defined a function called `measure_curvature_real` to measure the raduis of curvature in meters. 
-The input to the function is the output of the `fit_polynomial()` function, explinaed in the previus section. 
+The input to the function is the output of the `fit_polynomial()` function, explinaed in the previus section. The formula is given below:
 
-Rcurve​=∣dy2d2x​∣[1+(dydx​)2]3/2​
+<p align="left">  <img width="460/3" height="300/3" src="./output_images/R_curve_formula.png"></p>
 
-
+The final output for the exaple image is `... (m)` TODO: fix th enumber, and what is distance for the center?
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
 I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
 
-![alt text][image6]
+![alt text][image16]
 
 ---
 
