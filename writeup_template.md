@@ -39,13 +39,11 @@ I start by preparing "object points", which will be the (x, y, z) coordinates of
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function. I also save these two matrixes using `np.savez` such that I can use them later. Then, I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
 ![alt text][image0] |  ![alt text][image1]
-<p align="center">
-  <img width="460" height="300" src="./camera_cal/test_image.jpg">
-</p>
+<p align="center">  <img width="460" height="300" src="./camera_cal/test_image.jpg"></p>
+| Source        | Destination   |
+|:-------------:|:-------------:|
+| 585, 460      | 320, 0        |
 
-<p align="center">
-  <img width="460" height="300" src="[image0]">
-</p>
 
 ### Pipeline (single images)
 
