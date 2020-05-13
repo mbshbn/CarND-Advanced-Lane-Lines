@@ -44,7 +44,7 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 </p>
 
 <p align="center">
-  <img width="460" height="300" [image0]>
+  <img width="460" height="300" "distorted">
 </p>
 
 ### Pipeline (single images)
