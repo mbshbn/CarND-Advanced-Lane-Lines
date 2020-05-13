@@ -127,9 +127,14 @@ The output of the last function is the fllowing figure:
 
 <p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/binary_warped_line.jpg"></p>
 
-#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+#### 5. Calculat the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+I have defined a function called `measure_curvature_real` to measure the raduis of curvature in meters. 
+The input to the function is the output of the `fit_polynomial()` function, explinaed in the previus section. 
+
+Rcurve​=∣dy2d2x​∣[1+(dydx​)2]3/2​
+
+
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
