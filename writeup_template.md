@@ -17,7 +17,7 @@ The goals / steps of this project are the following:
 [image2]: ./output_images/road_undistorted.png "Undistorted_road"
 [image3]: ./output_images/combined_binary.png "binary threshhold"
 [image4]: ./output_images/image_rectangale.png "image_rectangale"
-[image5]: ./output_images/warped_image.png "warped_image"
+[image5]: ./output_images/warped_road.png "warped_image"
 [image6]: ./output_images/binary_warped_line.jpg "Road yellow line"
 
 [image2]: ./test_images/test1.jpg "Road Transformed"
