@@ -38,16 +38,10 @@ The code for this step is called `Camera_calibration.py`.
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image. Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function. I also save these two matrixes using `np.savez` such that I can use them later. Then, I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
-![alt text][image0] |  ![alt text][image1]
-| <p align="center">  <img width="460" height="300" src="./camera_cal/test_image.jpg"></p> | <p align="center">  <img width="460" height="300" src="./camera_cal/test_image.jpg"></p>|
 
-| Source        | Destination   |
-|:-------------:|:-------------:|
-| 585, 460      | 320, 0        |
-
-Solarized dark             |  Solarized Ocean
+Original image             |  undistorted image
 :-------------------------:|:-------------------------:
-![alt text][image0]  |  ![alt text][image0] 
+![alt text][image0]  |  ![alt text][image1] 
 
 ### Pipeline (single images)
 
