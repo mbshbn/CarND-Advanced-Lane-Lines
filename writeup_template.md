@@ -172,7 +172,7 @@ These two numbers are plotted on the images using `cv2.putText`.
 I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  
 Here is an example of my result on a test image:
 
-<p align="left">  <img width="460/3" height="300/3" src="./output_images/road_line.png"></p>
+<p align="center">  <img width="460/3" height="300/3" src="./output_images/road_line.png"></p>
 
 ---
 
