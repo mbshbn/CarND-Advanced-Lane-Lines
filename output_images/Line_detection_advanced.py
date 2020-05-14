@@ -20,7 +20,7 @@ def grad_thresh(img, thresh=(20,100)):
     sxbinary[(scaled_sobel >= thresh[0]) & (scaled_sobel <= thresh[1])] = 1
     return sxbinary
 
-def color_thresh(img, thresh=(170,255)):
+def colorHSV_thresh(img, thresh=(130,255)):
     # Color thresholds:
     # Convert to HLS color space and separate the S channel
     hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
@@ -29,6 +29,13 @@ def color_thresh(img, thresh=(170,255)):
     s_binary = np.zeros_like(s_channel)
     s_binary[(s_channel >= thresh[0]) & (s_channel <= thresh[1])] = 1
     return s_binary
+def colorBGR_thresh(img, thresh=(200,255)):
+    # Color thresholds:
+    R_channel = img[:,:,2]
+    # Threshold color channel
+    R_binary = np.zeros_like(R_channel)
+    R_binary[(R_channel >= thresh[0]) & (R_channel <= thresh[1])] = 1
+    return R_binary
 
 def warp(img, src, dst, img_size):
 
@@ -65,7 +72,7 @@ def find_lane_pixels(binary_warped):
     # Set the width of the windows +/- margin
     margin = 100
     # Set minimum number of pixels found to recenter window
-    minpix = 50
+    minpix = 150#increased this number to avoid being misled by shades
 
     # Set height of windows - based on nwindows above and image shape
     window_height = np.int(binary_warped.shape[0]//nwindows)
@@ -138,10 +145,10 @@ def visualize_region(binary_warped, left_lane_inds, right_lane_inds, left_fitx, 
     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
 
-    plt.imshow(out_img)
-    plt.title('out_img', fontsize=10)
-    mpimg.imsave("out_img.png", out_img)
-    plt.show()
+    # plt.imshow(out_img)
+    # plt.title('out_img', fontsize=10)
+    # mpimg.imsave("out_img.png", out_img)
+    # plt.show()
 
     # Generate a polygon to illustrate the search window area
     # And recast the x and y points into usable format for cv2.fillPoly()
@@ -159,10 +166,10 @@ def visualize_region(binary_warped, left_lane_inds, right_lane_inds, left_fitx, 
     cv2.fillPoly(window_img, np.int_([right_line_pts]), (0,255, 0))
     result = cv2.addWeighted(out_img, 1, window_img, 0.3, 0)
 
-    plt.imshow(result)
-    plt.title('result', fontsize=10)
-    plt.show()
-    mpimg.imsave("result.png", result)
+    # plt.imshow(result)
+    # plt.title('result', fontsize=10)
+    # plt.show()
+    # mpimg.imsave("result.png", result)
 
     # Plot the polynomial lines onto the image
     plt.plot(left_fitx, ploty, color='yellow')
@@ -177,7 +184,11 @@ def fit_polynomial(out_img, leftx, lefty, rightx, righty, size_binary_warped_0):
     right_fit = np.polyfit(righty, rightx, 2)
 
     # Generate x and y values for plotting
-    ploty = np.linspace(0, size_binary_warped_0-1, size_binary_warped_0 )
+    # to avoid estimating the part of line that there is no data, do not start from 0
+    ind_0 = max(min(lefty),min(righty)) #size_binary_warped_0 - max(min(lefty),min(righty))
+    #print(ind_0)
+    ploty = np.linspace(ind_0, size_binary_warped_0-1, size_binary_warped_0 )
+
     try:
         left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
         right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
@@ -289,9 +300,16 @@ def search_around_poly(binary_warped, left_fit, right_fit,margin):
 
 def Lane_Finding_Pipeline_Image_Advanced(image_road):
 
-    data = np.load('calib_info.npz')
-    mtx = data['mtx']
-    dist = data['dist']
+    # data = np.load('calib_info.npz')
+    # mtx = data['mtx']
+    # dist = data['dist']
+    # print(mtx)
+    # print(dist)
+    mtx = np.float32([[1.15777818*10**3, 0.00000000, 6.67113857*10**2],\
+    [0.00000000, 1.15282217*10**3, 3.86124583*10**2],\
+    [0.0000000, 0.00000000, 1.00000000]])
+    dist = np.float32([[-0.24688507, -0.02373155 ,-0.00109831,  0.00035107, -0.00259868]])
+
     #TODO: write the matrices here
 
     # undist_roadorting the test image_road:
@@ -310,24 +328,27 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     # Note: img is the undistorted image
     img = np.copy(undist_road)
 
-    sx_binary = grad_thresh(img, thresh=(20,100))
-    s_binary = color_thresh(img, thresh=(170,255))
+    sx_binary = grad_thresh(img, thresh=(40,100))#20, 100
+    s_binary = colorHSV_thresh(img, thresh=(170,255))
+    R_binary = colorBGR_thresh(img, thresh=(220,255))#240,255
     # Stack each channel to view their individual contributions in green and blue respectively
     # This returns a stack of the two binary images, whose components you can see as different colors
     # color_binary = np.dstack(( np.zeros_like(sx_binary), sx_binary, s_binary)) * 255
 
     # Combine the two binary thresholds
     combined_binary = np.zeros_like(sx_binary)
-    combined_binary[(s_binary == 1) | (sx_binary == 1)] = 1
+    combined_binary[(s_binary == 1) | (sx_binary == 1) | (R_binary == 1)] = 1
 
-    # f, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(24, 9))
+    # f, (ax1, ax2, ax3, ax4) = plt.subplots(1, 4, figsize=(24, 9))
     # f.tight_layout()
     # ax1.imshow(sx_binary)
     # ax1.set_title('grad thresh binary (sobel x)', fontsize=10)
     # ax2.imshow(s_binary)
     # ax2.set_title('color thresh binary (S from HSV)', fontsize=10)
-    # ax3.imshow(combined_binary)
-    # ax3.set_title('grad & color combined', fontsize=10)
+    # ax3.imshow(R_binary)
+    # ax3.set_title('color thresh binary (R from BGR)', fontsize=10)
+    # ax4.imshow(combined_binary)
+    # ax4.set_title('grad & color combined', fontsize=10)
     # plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
     # mpimg.imsave("cmbined_binary.png", combined_binary)#for readme
     # plt.show()
@@ -398,11 +419,11 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     # plt.show()
     # mpimg.imsave("binary_warped_line.png", binary_warped_line)# for readme
     #print(left_fit)
-    binary_warped_line2 = visualize_region(binary_warped, left_lane_inds, right_lane_inds, left_fitx, right_fitx,margin_around_line, ploty,nonzeroy, nonzerox)
-    plt.imshow(binary_warped_line2)
-    plt.title('binary warped line2', fontsize=10)
-    plt.show()
-    mpimg.imsave("binary_warped_line2.png", binary_warped_line2)# for readme
+    # binary_warped_line = visualize_region(binary_warped, left_lane_inds, right_lane_inds, left_fitx, right_fitx,margin_around_line, ploty,nonzeroy, nonzerox)
+    # plt.imshow(binary_warped_line)
+    # plt.title('binary warped line', fontsize=10)
+    # plt.show()
+    # mpimg.imsave("binary_warped_line.png", binary_warped_line)# for readme
     # else:
     #     leftx, lefty, rightx, righty, binary_warped_pixel = search_around_poly(binary_warped, left_fit, right_fit, margin_around_line)
     #     # plt.imshow(binary_warped_pixel)
@@ -425,18 +446,18 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     # mpimg.imsave("uuwarped_binary.png", uuwarped_binary)
     # plt.show()
 
-    black_wraped = np.zeros_like(binary_warped)
-    black_region_wraped = visualize_region(black_wraped, left_lane_inds, right_lane_inds, left_fitx, right_fitx, margin_around_line, ploty, nonzeroy, nonzerox)
-    plt.imshow(black_region_wraped)
-    plt.title('black_region_wraped', fontsize=10)
-    mpimg.imsave("black_region_wraped.png", black_region_wraped)
-    plt.show()
+    #black_wraped = np.zeros_like(binary_warped)
+    #black_region_wraped = visualize_region(black_wraped, left_lane_inds, right_lane_inds, left_fitx, right_fitx, margin_around_line, ploty, nonzeroy, nonzerox)
+    # plt.imshow(black_region_wraped)
+    # plt.title('black_region_wraped', fontsize=10)
+    # mpimg.imsave("black_region_wraped.png", black_region_wraped)
+    # plt.show()
 
-    black_region_unwraped = unwarp(black_region_wraped, src, dst, img_size)
-    plt.imshow(black_region_unwraped)
-    plt.title('black_region_unwraped', fontsize=10)
-    mpimg.imsave("black_region_unwraped.png", black_region_unwraped)
-    plt.show()
+    #black_region_unwraped = unwarp(black_region_wraped, src, dst, img_size)
+    # plt.imshow(black_region_unwraped)
+    # plt.title('black_region_unwraped', fontsize=10)
+    # mpimg.imsave("black_region_unwraped.png", black_region_unwraped)
+    # plt.show()
 
     # plot lines on the warped road image:
     black_wraped = np.zeros_like(warped_road)
@@ -478,27 +499,29 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     #                   1, (255, 0, 0), 2, cv2.LINE_AA)
     # Create a "color" binary image to combine with line image
     road_line = cv2.addWeighted(undist_road, 1., black_line_unwraped, 0.8, 0.)
-    plt.imshow(road_line)
-    plt.show()
-    mpimg.imsave("road_line.png", road_line)#for readme
+    # plt.imshow(road_line)
+    # plt.show()
+    # mpimg.imsave("road_line.png", road_line)#for readme
 
-    road_region = cv2.addWeighted(undist_road, 1., black_region_unwraped, 0.8, 0.)
-    plt.imshow(road_region)
-    plt.show()
-    mpimg.imsave("road_region.png", road_region)#for readme
+    #road_region = cv2.addWeighted(undist_road, 1., black_region_unwraped, 0.8, 0.)
+    # plt.imshow(road_region)
+    # plt.show()
+    # mpimg.imsave("road_region.png", road_region)#for readme
 
-    # for troubleshooting:
-    road_box = cv2.addWeighted(undist_road, 1., uuwarped_binary, 0.8, 0.)
-    plt.imshow(road_box)
-    plt.show()
-    mpimg.imsave("road_box.png", road_box)#for readme
+    # for troubleshooting:#undist_road
+    road_box = cv2.addWeighted(road_line, 1., uuwarped_binary, 0.8, 0.)
+    #plt.imshow(road_box)
+    # plt.show()
+    # mpimg.imsave("road_box.png", road_box)#for readme
 
-    result = road_line
+    result = road_box#road_line
 
     return result
 
+"""
+cv2.destroyAllWindows()
 # Make a list of calibration images
-images = glob.glob('../test_images/straight_lines*.jpg')
+# images = glob.glob('../test_images/straight_lines*.jpg')
 images = glob.glob('../test_images/test*.jpg')
 # Step through the list and search for chessboard corners
 ind_for = 0
@@ -519,14 +542,22 @@ for fname in images:
     ind_for = ind_for +1
 
 cv2.destroyAllWindows()# destroys the window showing image
-
 """
+"""
+image_path = '../test_images/test9.jpg'
+image = cv2.imread(image_path)
+result = Lane_Finding_Pipeline_Image_Advanced(image)
+plt.imshow(result)
+plt.show()
+mpimg.imsave("frame3.png", result)
+"""
+
 # Import everything needed to edit/save/watch video clips
 from moviepy.editor import VideoFileClip
 from IPython.display import HTML
 
-# video_out = 'project_video_output.mp4'
-video_out = 'challenge_video_output.mp4'
+video_out = 'project_video_output.mp4'
+# video_out = 'challenge_video_output.mp4'
 # video_out = 'harder_challenge_video.mp4'
 
 ## To speed up the testing process you may want to try your pipeline on a shorter subclip of the video
@@ -535,9 +566,8 @@ video_out = 'challenge_video_output.mp4'
 ## You may also uncomment the following line for a subclip of the first 5 seconds
 ##clip1 = VideoFileClip("test_videos/solidWhiteRight.mp4").subclip(0,5)
 
-# clip1 = VideoFileClip("../project_video.mp4")#.subclip(0,2)
-clip1 = VideoFileClip("../challenge_video.mp4")#.subclip(0,2)
+clip1 = VideoFileClip("../project_video.mp4")#.subclip(0,2)
+# clip1 = VideoFileClip("../challenge_video.mp4")#.subclip(0,2)
 # clip1 = VideoFileClip("../harder_challenge_video.mp4")#.subclip(0,2)
 clip = clip1.fl_image(Lane_Finding_Pipeline_Image_Advanced) #NOTE: this function expects color images!!
 clip.write_videofile(video_out, audio=False)
-"""
