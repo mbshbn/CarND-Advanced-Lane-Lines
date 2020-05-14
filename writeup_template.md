@@ -13,20 +13,20 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 [image0]: ./camera_cal/test_image.jpg "distorted"
-[image1]: ./output_images/chesshboard_undistorted.png "Undistorted_board"
+[image1]: ./output_images/chessboard_undistorted.png "Undistorted_board"
 [image2]: ./output_images/road_undistorted.png "Undistorted_road"
 [image3]: ./output_images/combined_binary.png "binary threshhold"
 [image4]: ./output_images/image_rectangale.png "image_rectangale"
-[image5]: ./output_images/warped_image.png "warped_image"
+[image5]: ./output_images/warped_road.png "warped_image"
 [image6]: ./output_images/binary_warped_line.jpg "Road yellow line"
-
 
 [image2]: ./test_images/test1.jpg "Road Transformed"
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
 [image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[image16]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
+
 
 
 ---
@@ -39,7 +39,10 @@ The code for this step is called `Camera_calibration.py`.
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image. Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
 I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function. I also save these two matrixes using `np.savez` such that I can use them later. Then, I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
-![alt text][image0] |  ![alt text][image1]
+
+Original image             |  undistorted image
+:-------------------------:|:-------------------------:
+![alt text][image0]  |  ![alt text][image1] 
 
 ### Pipeline (single images)
 
@@ -49,7 +52,8 @@ Initialy, it loads `mtx`, and `dist` matrices from camera calibration step.
 #### 1. Apply a distortion correction to raw images.
 
 Uisng the saved mtx, dist from calibration, I have undistorted an image from a road:
-![alt text][image2]
+
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/road_undistorted.png"></p>
 
 #### 2. Create a thresholded binary image using color transforms and gradients.
 
@@ -63,7 +67,7 @@ For color threshhold, the code includes a function called `color_thresh`. I used
 
 At the end, I have combined the two binary threshholds, and here is an example of my output for this step.
 
-![alt text][image3]
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/combined_binary.png"></p>
 
 #### 3. Perform a perspective transform.
 
@@ -93,8 +97,10 @@ This resulted in the following source and destination points:
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-![alt text][image4]
-![alt text][image5]
+Original image             |  undistorted image
+:-------------------------:|:-------------------------:
+![alt text][image4]  |  ![alt text][image5] 
+
 
 #### 4. Identify lane-line pixels and fit their positions with a polynomial
 To find lane pixels, a function called `find_lane_pixels()` is defined. First the histogram of the bottom half of the image along the vertical axis is computed usin `npsum`. 
@@ -119,17 +125,22 @@ To draw polynomials on the image, first I generate x and y values for plotting, 
 The output of the last function is the fllowing figure:
 (TODO: for some reason the yellow ones have not been saved)
 
-![alt text][image6]
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/binary_warped_line.jpg"></p>
 
-#### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
+#### 5. Calculate the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+I have defined a function called `measure_curvature_real` to measure the raduis of curvature in meters. 
+The input to the function is the output of the `fit_polynomial()` function, explinaed in the previus section. The formula is given below:
+
+<p align="left">  <img width="460/3" height="300/3" src="./output_images/R_curve_formula.png"></p>
+
+The final output for the exaple image is `... (m)` TODO: fix th enumber, and what is distance for the center?
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
 I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
 
-![alt text][image6]
+![alt text][image16]
 
 ---
 
