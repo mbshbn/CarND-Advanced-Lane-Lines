@@ -145,7 +145,7 @@ To plot them on the image, I use `plt.plot`. Also, I visualize the whole left an
 
 The output of the last function is the fllowing figure:
 
-<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/binary_warped_line.jpg"></p>
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/binary_warped_line.png"></p>
 
 #### 5. Calculate the radius of curvature of the lane and the position of the vehicle with respect to center.
 
