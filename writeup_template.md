@@ -142,7 +142,6 @@ To plot them on the image, I use `plt.plot`. Also, I visualize the whole left an
 
 The output of the last function is the following figure:
 
-<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/binary_warped_line.png"></p>
 <p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/road_box.png"></p>
 
 #### 4.2  Detect lane pixels around the detected line. (To optimize: Only for videos after analyzng the first image) 
@@ -160,7 +159,7 @@ The output for this section is as follows:
 I have defined a function called `measure_curvature_real` to measure the radius of curvature in meters. 
 The input to the function is the output of the `fit_polynomial()` function, explinaed in the previus section. The formula is given below:
 
-<p align="left">  <img width="460/3" height="300/3" src="./output_images/R_curve_formula.png"></p>
+<p align="left">  <img width="460/5" height="300/5" src="./output_images/R_curve_formula.png"></p>
 
 To calculate the position of the car with respect to the center of the lane, I have assumed that the camera is placed in the middle of the car. 
 Then the position of the middle of the lane is calculated as the mean value of the detected left and right lines on the bottom of the image.
