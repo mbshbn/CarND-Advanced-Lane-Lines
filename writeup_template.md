@@ -36,9 +36,14 @@ The goals / steps of this project are the following:
 
 The code for this step is called `Camera_calibration.py`.  
 
-I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image. Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
+I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. 
+Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image. 
+Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  
+`imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
 
-I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function. I also save these two matrixes using `np.savez` such that I can use them later. Then, I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
+I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function. 
+I also save these two matrixes using `np.savez` such that I can use them later. 
+Then, I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
 
 Original image             |  undistorted image
 :-------------------------:|:-------------------------:
@@ -51,7 +56,7 @@ Initialy, it loads `mtx`, and `dist` matrices from camera calibration step.
 
 #### 1. Apply a distortion correction to raw images.
 
-Uisng the saved mtx, dist from calibration, I have undistorted an image from a road:
+Uisng the saved `mtx`, `dist` from calibration, I have undistorted an image from a road:
 
 <p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/road_undistorted.png"></p>
 
@@ -61,9 +66,16 @@ Uisng the saved mtx, dist from calibration, I have undistorted an image from a r
 
 I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines 30 through 53 in `Line_detection_advanced.py`). 
 
-For gradient thresholds, the code includes a function called `grad_thresh`. First, I converted the image into grayscale `cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)`. Note that if you are using `cv2.imread`, you should use `cv2.COLOR_BGR2GRAY`. But is you are using `matplotlib.image.imread`, you shoud use `cv2.COLOR_BGR2GRAY`. Then, I took the derivative in x direction, using `cv2.Sobel` (Why? Because vertical lines can be detected better using gradient in the horizontal direction). Then, I scaled its magnitude into 8bit `255*np.absolute(sobelx)/np.max(abs_sobelx)`, and conervetd to `np.unit8`. At the end, to generate the binary mage, I used `np.zeros_like`, and applied the threshhold.
+For gradient thresholds, the code includes a function called `grad_thresh`. 
+First, I converted the image into grayscale `cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)`. Note that if you are using `cv2.imread`, you should use `cv2.COLOR_BGR2GRAY`. 
+But is you are using `matplotlib.image.imread`, you shoud use `cv2.COLOR_BGR2GRAY`. 
+Then, I took the derivative in x direction, using `cv2.Sobel` (Why? Because vertical lines can be detected better using gradient in the horizontal direction). 
+Then, I scaled its magnitude into 8bit `255*np.absolute(sobelx)/np.max(abs_sobelx)`, and conervetd to `np.unit8`. 
+At the end, to generate the binary mage, I used `np.zeros_like`, and applied the threshhold.
 
-For color threshhold, the code includes a function called `color_thresh`. I used HLS colorspace using `cv2.cvtColor(img, cv2.COLOR_BGR2HLS)`. (Why? because yellow and white colors can be detected well in S space). Then, I created the binary image `np.zeros_like`, and applied the threshhold on S channel.
+For color threshhold, the code includes a function called `color_thresh`. I used HLS colorspace using `cv2.cvtColor(img, cv2.COLOR_BGR2HLS)`. 
+(Why? because yellow and white colors can be detected well in S space). 
+Then, I created the binary image `np.zeros_like`, and applied the threshhold on S channel.
 
 At the end, I have combined the two binary threshholds, and here is an example of my output for this step.
 
@@ -71,7 +83,9 @@ At the end, I have combined the two binary threshholds, and here is an example o
 
 #### 3. Perform a perspective transform.
 
-The code for my perspective transform includes a function called `warp()`, which appears in lines 55 through 68 in the file `Line_detection_advanced.py` (output_images/Line_detection_advanced.py). The `warp()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+The code for my perspective transform includes a function called `warp()`, which appears in lines 55 through 68 in the file `Line_detection_advanced.py`. 
+The `warp()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points. 
+I chose the hardcode the source and destination points in the following manner:
 
 ```python
 src = np.float32(
@@ -103,27 +117,33 @@ Original image             |  undistorted image
 
 
 #### 4. Identify lane-line pixels and fit their positions with a polynomial
-To find lane pixels, a function called `find_lane_pixels()` is defined. First the histogram of the bottom half of the image along the vertical axis is computed usin `npsum`. 
+To find lane pixels, a function called `find_lane_pixels()` is defined. 
+First the histogram of the bottom half of the image along the vertical axis is computed usin `npsum`. 
+
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/histogram.png"></p>
+
 Then the peaks in the left half side and right half side of the historam is computed as the initial estimate of the left and right lines resectively.
-Then, the number of sliding windows `nwindows` and horizontal margin `margin` and the minimum nmber of pixels `minpix`.
+Then, the number of sliding windows `nwindows` and horizontal margin `margin` and the minimum nmber of pixels `minpix` are specefified.
 
-Then I defined  `for` loop.
+Then to recognize the left and right lines pixel poistions, I defined a `for` loop.
+To optimize the search process, at every iteration, the horizontal position of the center of left and right windows is passed to the next iteration to fid the boundries of the next window.
 I start processing the bottom windows. 
-The goal is to find the horizontal position of center of left and right windows which is used to found the boundries of the next window inside the for loop. As well as recognizing left and right lines oixel poistion.
-First, the vertices of each left and right windows are computed. Then left and rectangles is plotted on the image uisng `cv2.rectangle`, and specefying two opposite vertices of a rectangle.
-Then the indices of nonzero pixels in x and y directions within the windows are determined. 
-I append them to the left and right lists of indices, uisng `np.append`. 
+The vertices of each left and right windows are computed. The indices of nonzero pixels in x and y directions within the windows are identified. 
+To visualize this step, the left and right rectangles are plotted on the image uisng `cv2.rectangle` by specefying two opposite vertices of a rectangle.
+I append indices to the main lists of indices, uisng `np.append`. 
 If the minimum number of recognized indices in left and right lists are more than `minpix`, I update the position of center of the left and right windows.
-I continue to process the next windows which is the window above the bottom window. I continue till raach the `nwindows` which covers all the image along y axis. (TODO: really all th eimage?)
+I continue to process the next window which is the window above the bottom window. I continue procesisng each window till raach the `nwindows`.
 
-after the loop ends, I concatenate the arrays of indices (previously was a list of lists of pixels), using `np.concatenate`. Finally, I extract the left and right line pixel positions as the output of `find_lane_pixels`.
+After the loop ends, I concatenate the arrays of indices (previously was a list of lists of pixels), using `np.concatenate`. 
+Finally, I extract the left and right line pixel positions as the output of `find_lane_pixels()` function.
 
-The next step is to fit a 2nd order polynomial uisng `np.polyfit` to the output of the prevoius function `find_lane_pixels`. 
+The next step is to fit a 2nd order polynomial uisng `fit = np.polyfit` to the output of the prevoius function `find_lane_pixels`. 
 To do this, I defined a function called `fit_polynomial()`.
-To draw polynomials on the image, first I generate x and y values for plotting, using `np.linspace`. then use `fit[0]*ploty**2 + fit[1]*ploty + fit[2]` to have all points on the line for left and right lines. To plot them on the image, I use `plt.plot`. Also, I visualize the whole left and right windowes on the images.
+To draw polynomials on the image, first I generate x and y values for plotting, using `np.linspace`. 
+Then I used `fit[0]*ploty**2 + fit[1]*ploty + fit[2]` to have all points on the line for left and right lines, seperately. 
+To plot them on the image, I use `plt.plot`. Also, I visualize the whole left and right windowes on the images.
 
 The output of the last function is the fllowing figure:
-(TODO: for some reason the yellow ones have not been saved)
 
 <p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/binary_warped_line.jpg"></p>
 
@@ -134,13 +154,18 @@ The input to the function is the output of the `fit_polynomial()` function, expl
 
 <p align="left">  <img width="460/3" height="300/3" src="./output_images/R_curve_formula.png"></p>
 
-The final output for the exaple image is `... (m)` TODO: fix th enumber, and what is distance for the center?
+To calculate the position of the car with respect to the center of the lane, I have assumed that the camera is placed in the middle of the car. 
+Then the position ofthe middle of the lane is calculated as the mean value of the detected left and right lines on the bottom of the image.
+The center of car or camera is calculated by the image size, using `image.shape[1]`.
+Then the off center pixel is the distance between these two numbers, which is then converted to meters.
+These two numbers are plotted on the images using `cv2.putText`.
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  
+Here is an example of my result on a test image:
 
-![alt text][image16]
+<p align="left">  <img width="460/3" height="300/3" src="./output_images/road_line.png"></p>
 
 ---
 
