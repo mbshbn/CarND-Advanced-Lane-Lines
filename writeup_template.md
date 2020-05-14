@@ -7,9 +7,11 @@ The goals / steps of this project are the following:
 * Use color transforms, gradients, etc., to create a thresholded binary image.
 * Apply a perspective transform to rectify binary image ("birds-eye view").
 * Detect lane pixels and fit to find the lane boundary.
-* Determine the curvature of the lane and vehicle position with respect to center.
+* (To optimize: Only for videos after analyzing the first image) Detect lane pixels around the detected line. 
+* Determine the curvature of the lane and vehicle position with respect to the center.
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
+
 
 [//]: # (Image References)
 [image0]: ./camera_cal/test_image.jpg "distorted"
@@ -20,11 +22,6 @@ The goals / steps of this project are the following:
 [image5]: ./output_images/warped_road.png "warped_image"
 [image6]: ./output_images/binary_warped_line.jpg "Road yellow line"
 
-[image2]: ./test_images/test1.jpg "Road Transformed"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image16]: ./examples/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
 
 
@@ -52,11 +49,11 @@ Original image             |  undistorted image
 ### Pipeline (single images)
 
 The code for this step is called `Line_detection_advanced.py`.  
-Initialy, it loads `mtx`, and `dist` matrices from camera calibration step.
+Initially, it loads `mtx`, and `dist` matrices from the camera calibration step.
 
 #### 1. Apply a distortion correction to raw images.
 
-Uisng the saved `mtx`, `dist` from calibration, I have undistorted an image from a road:
+Using the saved `mtx`, `dist` from calibration, I have undistorted an image from a road:
 
 <p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/road_undistorted.png"></p>
 
@@ -68,16 +65,16 @@ I used a combination of color and gradient thresholds to generate a binary image
 
 For gradient thresholds, the code includes a function called `grad_thresh`. 
 First, I converted the image into grayscale `cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)`. Note that if you are using `cv2.imread`, you should use `cv2.COLOR_BGR2GRAY`. 
-But is you are using `matplotlib.image.imread`, you shoud use `cv2.COLOR_BGR2GRAY`. 
-Then, I took the derivative in x direction, using `cv2.Sobel` (Why? Because vertical lines can be detected better using gradient in the horizontal direction). 
+But is you are using `matplotlib.image.imread`, you should use `cv2.COLOR_BGR2GRAY`. 
+Then, I took the derivative in the x direction, using `cv2.Sobel` (Why? Because vertical lines can be detected better using gradient in the horizontal direction). 
 Then, I scaled its magnitude into 8bit `255*np.absolute(sobelx)/np.max(abs_sobelx)`, and conervetd to `np.unit8`. 
-At the end, to generate the binary mage, I used `np.zeros_like`, and applied the threshhold.
+In the end, to generate the binary mage, I used `np.zeros_like`, and applied the threshold.
 
 For color threshhold, the code includes a function called `color_thresh`. I used HLS colorspace using `cv2.cvtColor(img, cv2.COLOR_BGR2HLS)`. 
 (Why? because yellow and white colors can be detected well in S space). 
-Then, I created the binary image `np.zeros_like`, and applied the threshhold on S channel.
+Then, I created the binary image `np.zeros_like`, and applied the threshold on the S channel.
 
-At the end, I have combined the two binary threshholds, and here is an example of my output for this step.
+In the end, I have combined the two binary thresholds, and here is an example of my output for this step.
 
 <p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/combined_binary.png"></p>
 
@@ -116,48 +113,59 @@ Original image             |  undistorted image
 ![alt text][image4]  |  ![alt text][image5] 
 
 
-#### 4. Identify lane-line pixels and fit their positions with a polynomial
+#### 4.1 Identify lane-line pixels and fit their positions with a polynomial
 To find lane pixels, a function called `find_lane_pixels()` is defined. 
-First the histogram of the bottom half of the image along the vertical axis is computed usin `npsum`. 
+First, the histogram of the bottom half of the image along the vertical axis is computed using `npsum`. 
 
 <p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/histogram.png"></p>
 
-Then the peaks in the left half side and right half side of the historam is computed as the initial estimate of the left and right lines resectively.
-Then, the number of sliding windows `nwindows` and horizontal margin `margin` and the minimum nmber of pixels `minpix` are specefified.
+Then the peaks in the left half side and right half side of the histogram are computed as the initial estimate of the left and right lines respectively.
+Then, the number of sliding windows `nwindows` and horizontal margin `margin` and the minimum number of pixels `minpix` are specified.
 
-Then to recognize the left and right lines pixel poistions, I defined a `for` loop.
-To optimize the search process, at every iteration, the horizontal position of the center of left and right windows is passed to the next iteration to fid the boundries of the next window.
+Then to recognize the left and right lines pixel positions, I defined a `for` loop.
+To optimize the search process, at every iteration, the horizontal position of the center of the left and right windows is passed to the next iteration to fid the boundaries of the next window.
 I start processing the bottom windows. 
 The vertices of each left and right windows are computed. The indices of nonzero pixels in x and y directions within the windows are identified. 
-To visualize this step, the left and right rectangles are plotted on the image uisng `cv2.rectangle` by specefying two opposite vertices of a rectangle.
-I append indices to the main lists of indices, uisng `np.append`. 
-If the minimum number of recognized indices in left and right lists are more than `minpix`, I update the position of center of the left and right windows.
-I continue to process the next window which is the window above the bottom window. I continue procesisng each window till raach the `nwindows`.
+To visualize this step, the left and right rectangles are plotted on the image using `cv2.rectangle` by specifying two opposite vertices of a rectangle.
+I append indices to the main lists of indices, using `np.append`. 
+If the minimum number of recognized indices in the left and right lists are more than `minpix`, I update the position of the center of the left and right windows.
+I continue to process the next window which is the window above the bottom window. I continue processing each window to reach the `nwindows`.
 
 After the loop ends, I concatenate the arrays of indices (previously was a list of lists of pixels), using `np.concatenate`. 
 Finally, I extract the left and right line pixel positions as the output of `find_lane_pixels()` function.
 
-The next step is to fit a 2nd order polynomial uisng `fit = np.polyfit` to the output of the prevoius function `find_lane_pixels`. 
+The next step is to fit a 2nd order polynomial using `fit = np.polyfit` to the output of the previous function `find_lane_pixels`. 
 To do this, I defined a function called `fit_polynomial()`.
 To draw polynomials on the image, first I generate x and y values for plotting, using `np.linspace`. 
 Then I used `fit[0]*ploty**2 + fit[1]*ploty + fit[2]` to have all points on the line for left and right lines, seperately. 
-To plot them on the image, I use `plt.plot`. Also, I visualize the whole left and right windowes on the images.
+To plot them on the image, I use `plt.plot`. Also, I visualize the whole left and right windows on the images.
 
-The output of the last function is the fllowing figure:
+The output of the last function is the following figure:
 
 <p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/binary_warped_line.png"></p>
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/road_box.png"></p>
+
+#### 4.2  Detect lane pixels around the detected line. (To optimize: Only for videos after analyzng the first image) 
+
+For analyzing videos, we can use the detected lane lines information from the previous image to speed the code.
+To do this, I have defined a function called `search_around_poly`. 
+The input is the polynomial coefficient of the previous image, and a margin to restrict the area around the line for a search.
+(Why? Because the lane lines do not usually jump! )
+The output for this section is as follows:
+
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/road_region.png"></p>
 
 #### 5. Calculate the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I have defined a function called `measure_curvature_real` to measure the raduis of curvature in meters. 
+I have defined a function called `measure_curvature_real` to measure the radius of curvature in meters. 
 The input to the function is the output of the `fit_polynomial()` function, explinaed in the previus section. The formula is given below:
 
 <p align="left">  <img width="460/3" height="300/3" src="./output_images/R_curve_formula.png"></p>
 
 To calculate the position of the car with respect to the center of the lane, I have assumed that the camera is placed in the middle of the car. 
-Then the position ofthe middle of the lane is calculated as the mean value of the detected left and right lines on the bottom of the image.
-The center of car or camera is calculated by the image size, using `image.shape[1]`.
-Then the off center pixel is the distance between these two numbers, which is then converted to meters.
+Then the position of the middle of the lane is calculated as the mean value of the detected left and right lines on the bottom of the image.
+The center of the car or camera is calculated by the image size, using `image.shape[1]`.
+Then the off-center pixel is the distance between these two numbers, which is then converted to meters.
 These two numbers are plotted on the images using `cv2.putText`.
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
