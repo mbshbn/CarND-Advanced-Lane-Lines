@@ -50,11 +50,11 @@ Initially, it loads `mtx`, and `dist` matrices from the camera calibration step.
 Using the saved `mtx`, `dist` from calibration, I have undistorted an image from a road:
 
 [image10]: ./test_images/straight_lines1.jpg 
-[image20]: ./output_images/road_undistorted.png 
+[image11]: ./output_images/road_undistorted.png 
 
 Original image             |  undistorted image
 :-------------------------:|:-------------------------:
-![alt text][image10]  |  ![alt text][image20]
+![alt text][image10]  |  ![alt text][image11]
 
 
 #### 2. Create a thresholded binary image using color transforms and gradients.
@@ -85,7 +85,7 @@ Gradient threshhold           |  S threshhold (HSV) |  R threshhold from (RGB)
 
 In the end, I have combined the two binary thresholds, and here is an example of my output for this step.
 
-<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/combined_binary.png"></p>
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/cmbined_binary.png"></p>
 
 #### 3. Perform a perspective transform.
 
@@ -156,12 +156,12 @@ The output of the last function is the following figure:
 
 
 [image410]: ./output_images/binary_warped_window_pixel_line.png 
-[image420]: ./output_images/road_window.png 
+[image411]: ./output_images/road_window.png 
 
 
 Binary image             |  Road image
 :-------------------------:|:-------------------------:
-![alt text][image410]  |  ![alt text][image420] 
+![alt text][image410]  |  ![alt text][image411] 
 
 
 #### 4.2  Detect lane pixels around the detected line. (To optimize: Only for videos after analyzng the first image) 
