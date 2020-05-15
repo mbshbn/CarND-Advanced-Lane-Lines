@@ -34,7 +34,7 @@ I also save these two matrixes using `np.savez` such that I can use them later.
 Then, I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
 
 [image0]: ./camera_cal/test_image.jpg "distorted"
-[image1]: ./output_images/chessboard_undistorted.png "Undistorted_board"
+[image1]: ./for_readme/output_images/chessboard_undistorted.png "Undistorted_board"
 
 Original image             |  undistorted image
 :-------------------------:|:-------------------------:
@@ -50,7 +50,7 @@ Initially, it loads `mtx`, and `dist` matrices from the camera calibration step.
 Using the saved `mtx`, `dist` from calibration, I have undistorted an image from a road:
 
 [image10]: ./test_images/straight_lines1.jpg 
-[image11]: ./output_images/road_undistorted.png 
+[image11]: ./output_images/for_readme/road_undistorted.png 
 
 Original image             |  undistorted image
 :-------------------------:|:-------------------------:
@@ -74,9 +74,9 @@ For color threshhold, the code includes a function called `color_thresh`. I used
 (Why? because yellow and white colors can be detected well in S space). 
 Then, I created the binary image `np.zeros_like`, and applied the threshold on the S channel. Also, I have applied threshhold on R space in RGB colorspace. The results are as follwos:
 
-[image20]: ./output_images/sx_binary.png 
-[image21]: ./output_images/s_binary.png 
-[image22]: ./output_images/R_binary.png 
+[image20]: ./output_images/for_readme/sx_binary.png 
+[image21]: ./output_images/for_readme/s_binary.png 
+[image22]: ./output_images/for_readme/R_binary.png 
 
 Gradient threshhold           |  S threshhold (HSV) |  R threshhold from (RGB)
 :-------------------------:|:-------------------------:|:-------------------------:
@@ -85,7 +85,7 @@ Gradient threshhold           |  S threshhold (HSV) |  R threshhold from (RGB)
 
 In the end, I have combined the two binary thresholds, and here is an example of my output for this step.
 
-<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/cmbined_binary.png"></p>
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/for_readme/cmbined_binary.png"></p>
 
 #### 3. Perform a perspective transform.
 
@@ -117,8 +117,8 @@ This resulted in the following source and destination points:
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-[image4]: ./output_images/road_rectangale.png 
-[image5]: ./output_images/road_rectangale_warped.png 
+[image4]: ./output_images/for_readme/road_rectangale.png 
+[image5]: ./output_images/for_readme/road_rectangale_warped.png 
 
 Original image             |  undistorted image
 :-------------------------:|:-------------------------:
@@ -129,7 +129,7 @@ Original image             |  undistorted image
 To find lane pixels, a function called `find_lane_pixels()` is defined. 
 First, the histogram of the bottom half of the image along the vertical axis is computed using `npsum`. 
 
-<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/histogram.png"></p>
+<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/for_readme/histogram.png"></p>
 
 Then the peaks in the left half side and right half side of the histogram are computed as the initial estimate of the left and right lines respectively.
 Then, the number of sliding windows `nwindows` and horizontal margin `margin` and the minimum number of pixels `minpix` are specified.
@@ -155,8 +155,8 @@ To plot them on the image, I use `plt.plot`. Also, I visualize the whole left an
 The output of the last function is the following figure:
 
 
-[image410]: ./output_images/binary_warped_window_pixel_line.png 
-[image411]: ./output_images/road_window.png 
+[image410]: ./output_images/for_readme/binary_warped_window_pixel_line.png 
+[image411]: ./output_images/for_readme/road_window.png 
 
 
 Binary image             |  Road image
@@ -178,7 +178,7 @@ The output for this section is as follows:
 I have defined a function called `measure_curvature_real` to measure the radius of curvature in meters. 
 The input to the function is the output of the `fit_polynomial()` function, explinaed in the previus section. The formula is given below:
 
-<p align="left">  <img src="./output_images/R_curve_formula.png"></p>
+<p align="left">  <img src="./output_images/for_readme/R_curve_formula.png"></p>
 
 To calculate the position of the car with respect to the center of the lane, I have assumed that the camera is placed in the middle of the car. 
 Then the position of the middle of the lane is calculated as the mean value of the detected left and right lines on the bottom of the image.
@@ -191,7 +191,7 @@ These two numbers are plotted on the images using `cv2.putText`.
 I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  
 Here is an example of my result on a test image:
 
-<p align="center">  <img width="460/3" height="300/3" src="./output_images/road_lane.png"></p>
+<p align="center">  <img width="460/3" height="300/3" src="./output_images/for_readme/road_lane.png"></p>
 
 ---
 
