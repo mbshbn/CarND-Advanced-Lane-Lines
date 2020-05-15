@@ -132,7 +132,7 @@ First, the histogram of the bottom half of the image along the vertical axis is 
 
 Then the peaks in the left half side and right half side of the histogram are computed as the initial estimate of the left and right lines respectively.
 Then, the number of sliding windows `nwindows` and horizontal margin `margin` and the minimum number of pixels `minpix` are specified.
-I set 'nwindows = 9,margin = 100,minpix = 100`
+I set `nwindows = 9,margin = 100,minpix = 100`
 
 Then to recognize the left and right lines pixel positions, I defined a `for` loop.
 To optimize the search process, at every iteration, the horizontal position of the center of the left and right windows is passed to the next iteration to fid the boundaries of the next window.
