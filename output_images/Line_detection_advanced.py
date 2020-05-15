@@ -446,18 +446,7 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     # mpimg.imsave("binary_warped.png", binary_warped)
     # plt.show()
 
-    ## VISULAIZE ROAD:
-    undist_road_temp = np.copy(undist_road)
-    road_rectangale = visualize_perspective_transfor(undist_road_temp, src)
-    plt.imshow(road_rectangale)
-    plt.title('road with rectangle', fontsize=10)
-    mpimg.imsave("road_rectangale.png", road_rectangale)#for readme
-    plt.show()
-    road_rectangale_warped, M, Minv = warp(road_rectangale, src, dst, img_size)
-    plt.imshow(road_rectangale_warped)
-    plt.title('road_rectangale_warped', fontsize=10)
-    mpimg.imsave("road_rectangale_warped.png", road_rectangale_warped)#for readme
-    plt.show()
+
 
     #TODO: write the if condition:
     margin_around_line = 100
@@ -535,14 +524,26 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
 
     result = road_window
 
-    mpimg.imsave("road_undistorted.png", undist_road)
-    mpimg.imsave("sx_binary.png", sx_binary)
-    mpimg.imsave("s_binary.png", s_binary)
-    mpimg.imsave("R_binary.png", R_binary)
-    mpimg.imsave("cmbined_binary.png", combined_binary)
-    mpimg.imsave("binary_warped_window_pixel.png", binary_warped_window_pixel)
-    mpimg.imsave("binary_warped_window_pixel_line.png", binary_warped_window_pixel_line)# for readme
-
+    ## VISULAIZE ROAD:
+    # undist_road_temp = np.copy(undist_road)
+    # road_rectangale = visualize_perspective_transfor(undist_road_temp, src)
+    # plt.imshow(road_rectangale)
+    # plt.title('road with rectangle', fontsize=10)
+    # mpimg.imsave("road_rectangale.png", road_rectangale)#for readme
+    # plt.show()
+    # road_rectangale_warped, M, Minv = warp(road_rectangale, src, dst, img_size)
+    # plt.imshow(road_rectangale_warped)
+    # plt.title('road_rectangale_warped', fontsize=10)
+    # mpimg.imsave("road_rectangale_warped.png", road_rectangale_warped)#for readme
+    # plt.show()
+    # mpimg.imsave("road_undistorted.png", undist_road)
+    # mpimg.imsave("sx_binary.png", sx_binary)
+    # mpimg.imsave("s_binary.png", s_binary)
+    # mpimg.imsave("R_binary.png", R_binary)
+    # mpimg.imsave("cmbined_binary.png", combined_binary)
+    # mpimg.imsave("binary_warped_window_pixel.png", binary_warped_window_pixel)
+    # mpimg.imsave("binary_warped_window_pixel_line.png", binary_warped_window_pixel_line)# for readme
+    mpimg.imsave("road_window.png", road_window)#
     return road_lane
 
 """
@@ -574,9 +575,9 @@ cv2.destroyAllWindows()# destroys the window showing image
 image_path = '../test_images/straight_lines1.jpg'
 image = cv2.imread(image_path)
 road_lane = Lane_Finding_Pipeline_Image_Advanced(image)
-plt.imshow(road_lane)
-plt.show()
-mpimg.imsave("road_lane.png", road_lane)#for readme
+# plt.imshow(road_lane)
+# plt.show()
+# mpimg.imsave("road_lane.png", road_lane)#for readme
 
 """
 # Import everything needed to edit/save/watch video clips
