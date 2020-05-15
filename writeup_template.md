@@ -15,14 +15,12 @@ The goals / steps of this project are the following:
 
 [video1]: ./project_video.mp4 "Video"
 
-
-
 ---
 ### Camera Calibration
 
 #### 1. Computation of the camera matrix and distortion coefficients with an example of a distortion corrected calibration image.
 
-The code for this step is called `Camera_calibration.py`.  
+The code for this step is called `output_images/Camera_calibration.py`.  
 
 I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. 
 Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image. 
@@ -42,12 +40,13 @@ Original image             |  undistorted image
 
 ### Pipeline (single images)
 
-The code for this step is called `Line_detection_advanced.py`.  
+The code for this step is called `output_images/Line_detection_advanced.py`.  
 Initially, it loads `mtx`, and `dist` matrices from the camera calibration step.
 
 #### 1. Apply a distortion correction to raw images.
+(line 348)
 
-Using the saved `mtx`, `dist` from calibration, I have undistorted an image from a road:
+Using the saved `mtx`, `dist` from calibration, I have undistorted an image from a road :
 
 [image10]: ./test_images/straight_lines1.jpg 
 [image11]: ./output_images/for_readme/road_undistorted.png 
@@ -59,7 +58,7 @@ Original image             |  undistorted image
 
 #### 2. Create a thresholded binary image using color transforms and gradients.
 
-(TODO: Which line of code?)
+(Linse 399-409)
 
 I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines 30 through 53 in `Line_detection_advanced.py`). 
 
@@ -88,6 +87,7 @@ In the end, I have combined the two binary thresholds, and here is an example of
 <p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/for_readme/cmbined_binary.png"></p>
 
 #### 3. Perform a perspective transform.
+(Lines 426-443)
 
 The code for my perspective transform includes a function called `warp()`, which appears in lines 55 through 68 in the file `Line_detection_advanced.py`. 
 The `warp()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points. 
@@ -126,6 +126,8 @@ Original image             |  undistorted image
 
 
 #### 4.1 Identify lane-line pixels and fit their positions with a polynomial
+(Lines 449-467)
+
 To find lane pixels, a function called `find_lane_pixels()` is defined. 
 First, the histogram of the bottom half of the image along the vertical axis is computed using `npsum`. 
 
@@ -165,6 +167,7 @@ Binary image             |  Road image
 
 
 #### 4.2  Detect lane pixels around the detected line. (To optimize: Only for videos after analyzng the first image) 
+(Lines 210-241)
 
 For analyzing videos, we can use the detected lane lines information from the previous image to speed the code.
 To do this, I have defined a function called `search_around_poly`. 
@@ -174,7 +177,7 @@ The output for this section is as follows:
 
 
 #### 5. Calculate the radius of curvature of the lane and the position of the vehicle with respect to center.
-
+(Lines 488-495)
 I have defined a function called `measure_curvature_real` to measure the radius of curvature in meters. 
 The input to the function is the output of the `fit_polynomial()` function, explinaed in the previus section. The formula is given below:
 
