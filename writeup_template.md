@@ -49,7 +49,13 @@ Initially, it loads `mtx`, and `dist` matrices from the camera calibration step.
 
 Using the saved `mtx`, `dist` from calibration, I have undistorted an image from a road:
 
-<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/road_undistorted.png"></p>
+[image10]: ./test_images/straight_lines1.jpg 
+[image20]: ./output_images/road_undistorted.png 
+
+Original image             |  undistorted image
+:-------------------------:|:-------------------------:
+![alt text][image10]  |  ![alt text][image20]
+
 
 #### 2. Create a thresholded binary image using color transforms and gradients.
 
