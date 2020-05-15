@@ -150,7 +150,7 @@ The output of the last function is the following figure:
 
 
 [image410]: ./output_images/binary_warped_window_pixel_line.png 
-[image421]: ./output_images/road_window.png 
+[image420]: ./output_images/road_window.png 
 
 
 Binary image             |  Road image
