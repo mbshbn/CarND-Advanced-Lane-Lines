@@ -186,7 +186,7 @@ The input to the function is the output of the `fit_polynomial()` function, expl
 To calculate the position of the car with respect to the center of the lane, I have assumed that the camera is placed in the middle of the car. 
 Then the position of the middle of the lane is calculated as the mean value of the detected left and right lines on the bottom of the image.
 The center of the car or camera is calculated by the image size, using `image.shape[1]`.
-Then the off-center pixel is the distance between these two numbers, which is then converted to meters.
+Then the off-center pixel is the distance between these two numbers, which is then converted to meters by `xm_per_pix = 3.7 /700`.
 These two numbers are plotted on the images using `cv2.putText`.
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
