@@ -14,8 +14,6 @@ The goals / steps of this project are the following:
 
 
 [//]: # (Image References)
-[image0]: ./camera_cal/test_image.jpg "distorted"
-[image1]: ./output_images/chessboard_undistorted.png "Undistorted_board"
 [image2]: ./output_images/road_undistorted.png "Undistorted_road"
 [image3]: ./output_images/combined_binary.png "binary threshhold"
 [image4]: ./output_images/image_rectangale.png "image_rectangale"
