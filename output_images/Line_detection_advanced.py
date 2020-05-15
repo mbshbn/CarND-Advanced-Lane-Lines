@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import glob
 
-
 def grad_thresh(img, thresh=(20,100)):
     # Gradient thresholds:
     # Grayscale image
@@ -41,11 +40,13 @@ def warp(img, src, dst, img_size):
 
     #compute the perspective trasform, matrix M
     M = cv2.getPerspectiveTransform(src, dst)
+    # Could compute the inverse by swapping the input parameters
+    Minv = cv2.getPerspectiveTransform(dst, src)
 
     # creat warped image -uses linear interpolation
     warped = cv2.warpPerspective(img, M, img_size,flags=cv2.INTER_LINEAR)
 
-    return warped
+    return warped, M, Minv
 
 def find_lane_pixels(binary_warped):
 
@@ -72,7 +73,7 @@ def find_lane_pixels(binary_warped):
     # Set the width of the windows +/- margin
     margin = 100
     # Set minimum number of pixels found to recenter window
-    minpix = 150#increased this number to avoid being misled by shades
+    minpix = 100#increased this number to avoid being misled by shades
 
     # Set height of windows - based on nwindows above and image shape
     window_height = np.int(binary_warped.shape[0]//nwindows)
@@ -136,8 +137,119 @@ def find_lane_pixels(binary_warped):
 
     return leftx, lefty, rightx, righty, out_img, left_lane_inds, right_lane_inds, nonzeroy, nonzerox
 
-def visualize_region(binary_warped, left_lane_inds, right_lane_inds, left_fitx, right_fitx, margin_around_line, ploty, nonzeroy, nonzerox):
-    ## Visualization ##
+def fit_polynomial(leftx, lefty, rightx, righty, size_binary_warped_0):
+
+    # Fit a second order polynomial to each using `np.polyfit`
+    left_fit = np.polyfit(lefty, leftx, 2)
+    right_fit = np.polyfit(righty, rightx, 2)
+
+    # Generate x and y values for plotting
+    # to avoid estimating the part of line that there is no data, do not start from 0
+    ind_0 = max(min(lefty),min(righty)) #size_binary_warped_0 - max(min(lefty),min(righty))
+    #print(ind_0)
+    ploty = np.linspace(ind_0, size_binary_warped_0-1, size_binary_warped_0 )
+
+    try:
+        left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+        right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+    except TypeError:
+        # Avoids an error if `left` and `right_fit` are still none or incorrect
+        print('The function failed to fit a line!')
+        left_fitx = 1*ploty**2 + 1*ploty
+        right_fitx = 1*ploty**2 + 1*ploty
+
+    return ploty, left_fitx, right_fitx, left_fit, right_fit
+
+def measure_curvature_real(ploty, left_fit_cr, right_fit_cr, ym_per_pix, xm_per_pix):
+    '''
+    Calculates the curvature of polynomial functions in meters.
+    '''
+    # Define y-value where we want radius of curvature
+    # We'll choose the maximum y-value, corresponding to the bottom of the image
+    y_eval = np.max(ploty)
+
+    # Calculation of R_curve (radius of curvature)
+    left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
+    right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
+
+    return left_curverad, right_curverad
+
+def measure_off_center_real(left_fit_cr_0, right_fit_cr_0, img_size_0,xm_per_pix):
+    lane_mid = (left_fit_cr_0 + right_fit_cr_0)/2
+    middle_img = img_size_0/2
+    car_off_center = (lane_mid - middle_img)*xm_per_pix
+
+    return car_off_center
+
+def unwarp(img, Minv, img_size):
+
+    # creat warped image -uses linear interpolation
+    unwarped = cv2.warpPerspective(img, Minv, img_size,flags=cv2.INTER_LINEAR)
+
+    return unwarped
+
+def draw_line(out_img, left_fitx, right_fitx, ploty):
+    # only for 1d polynomial:
+    # color=[255, 255, 0]
+    # thickness=5
+    # cv2.line(out_img, (left_fitx[0].astype(int), ploty[0].astype(int)),\
+    #  (left_fitx[-1].astype(int), ploty[-1].astype(int)), color, thickness)
+    # cv2.line(out_img, (right_fitx[0].astype(int), ploty[0].astype(int)),\
+    #  (right_fitx[-1].astype(int), ploty[-1].astype(int)), color, thickness)
+    # for curved polynomials:
+    draw_points_left = (np.asarray([left_fitx, ploty]).T).astype(np.int32)   # needs to be int32 and transposed
+    draw_points_right = (np.asarray([right_fitx, ploty]).T).astype(np.int32)   # needs to be int32 and transposed
+    cv2.polylines(out_img, [draw_points_left], False, (0, 255,0),7)  # args: image, points, closed, color
+    cv2.polylines(out_img, [draw_points_right], False, (0, 255,0),7)  # args: image, points, closed, color
+
+    # Plots the left and right polynomials on the lane lines
+    # plt.plot(left_fitx, ploty, color='yellow')
+    # plt.plot(right_fitx, ploty, color='yellow')
+    return out_img
+
+def search_around_poly(binary_warped, left_fit, right_fit,margin):
+    # HYPERPARAMETER
+    # Choose the width of the margin around the previous polynomial to search
+    # The quiz grader expects 100 here, but feel free to tune on your own!
+    margin = 100
+
+    # Grab activated pixels
+    nonzero = binary_warped.nonzero()
+    nonzeroy = np.array(nonzero[0])
+    nonzerox = np.array(nonzero[1])
+
+    ### TO-DO: Set the area of search based on activated x-values ###
+    ### within the +/- margin of our polynomial function ###
+    ### Hint: consider the window areas for the similarly named variables ###
+    ### in the previous quiz, but change the windows to our new search area ###
+    left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy +
+                    left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) +
+                    left_fit[1]*nonzeroy + left_fit[2] + margin)))
+    right_lane_inds = ((nonzerox > (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy +
+                    right_fit[2] - margin)) & (nonzerox < (right_fit[0]*(nonzeroy**2) +
+                    right_fit[1]*nonzeroy + right_fit[2] + margin)))
+
+    # Again, extract left and right line pixel positions
+    leftx = nonzerox[left_lane_inds]
+    lefty = nonzeroy[left_lane_inds]
+    rightx = nonzerox[right_lane_inds]
+    righty = nonzeroy[right_lane_inds]
+
+    # # Fit new polynomials
+    # left_fitx, right_fitx, ploty = fit_poly(binary_warped.shape, leftx, lefty, rightx, righty)
+
+    return leftx, lefty, rightx, righty, result #out_img
+
+def visualize_detected_pixels(out_img, lefty, leftx, righty, rightx):
+    """show detected pixels on the warped image"""
+    # Colors in the left and right lane regions
+    out_img[lefty, leftx] = [255, 0, 0]
+    out_img[righty, rightx] = [0, 0, 255]
+
+    return out_img
+
+def visualize_region_search_around_poly(binary_warped, left_lane_inds, right_lane_inds, left_fitx, right_fitx, margin_around_line, ploty, nonzeroy, nonzerox):
+    """    draw region around poly on the road_box    """
     # Create an image to draw on and an image to show the selection window
     out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
     window_img = np.zeros_like(out_img)
@@ -175,131 +287,88 @@ def visualize_region(binary_warped, left_lane_inds, right_lane_inds, left_fitx, 
     plt.plot(left_fitx, ploty, color='yellow')
     plt.plot(right_fitx, ploty, color='yellow')
     ## End visualization steps ##
+
     return result
 
-def fit_polynomial(out_img, leftx, lefty, rightx, righty, size_binary_warped_0):
+def visualize_window_serach(binary_warped_window_pixel, undist_road,Minv, img_size ):
+    """     draw search windows on the road    """
 
-    # Fit a second order polynomial to each using `np.polyfit`
-    left_fit = np.polyfit(lefty, leftx, 2)
-    right_fit = np.polyfit(righty, rightx, 2)
+    binary_warped_window_pixel_unwraped = unwarp(binary_warped_window_pixel, Minv, img_size)
+    # plt.imshow(black_region_unwraped)
+    # plt.title('black_region_unwraped', fontsize=10)
+    # mpimg.imsave("black_region_unwraped.png", black_region_unwraped)
+    # plt.show()
 
-    # Generate x and y values for plotting
-    # to avoid estimating the part of line that there is no data, do not start from 0
-    ind_0 = max(min(lefty),min(righty)) #size_binary_warped_0 - max(min(lefty),min(righty))
-    #print(ind_0)
-    ploty = np.linspace(ind_0, size_binary_warped_0-1, size_binary_warped_0 )
+    road_window = cv2.addWeighted(undist_road, 1., binary_warped_window_pixel_unwraped, 0.8, 0.)
+    # plt.imshow(road_region)
+    # plt.show()
+    # mpimg.imsave("road_region.png", road_region)#for readme
 
-    try:
-        left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-        right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
-    except TypeError:
-        # Avoids an error if `left` and `right_fit` are still none or incorrect
-        print('The function failed to fit a line!')
-        left_fitx = 1*ploty**2 + 1*ploty
-        right_fitx = 1*ploty**2 + 1*ploty
+    return road_window
 
-    ## Visualization ##
-    # Colors in the left and right lane regions
-    out_img[lefty, leftx] = [255, 0, 0]
-    out_img[righty, rightx] = [0, 0, 255]
+def visualize_lane(binary_warped,undist_road, ploty, left_fitx, right_fitx, Minv, img_size):
+    """     Draw lane area on the road    """
+    # Create an image to draw the lines on
+    warp_zero = np.zeros_like(binary_warped).astype(np.uint8)
+    color_warp = np.dstack((warp_zero, warp_zero, warp_zero))
+    # Recast the x and y points into usable format for cv2.fillPoly()
+    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+    pts = np.hstack((pts_left, pts_right))
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
+    # Warp the blank back to original image space using inverse perspective matrix (Minv)
+    #newwarp = cv2.warpPerspective(color_warp, Minv, (image.shape[1], image.shape[0]))
+    newwarp = unwarp(color_warp, Minv, img_size)
+    # Combine the result with the original image
+    result = cv2.addWeighted(undist_road, 1, newwarp, 0.3, 0)
+    #plt.imshow(result)
+    return result
 
-    # Plots the left and right polynomials on the lane lines
-    # plt.plot(left_fitx, ploty, color='yellow')
-    # plt.plot(right_fitx, ploty, color='yellow')
+def visualize_lines(undist_road, src, dst, img_size,left_fitx, right_fitx, ploty ):
+    """    Draw lane lines on the road_line    """
+    warped_road, M, Minv = warp(undist_road, src, dst, img_size)
+    # plt.imshow(warped_road)
+    # plt.title('warped road with rectangle', fontsize=10)
+    # mpimg.imsave("warped_road.png", warped_road)#for readme
+    # plt.show()
 
-    out_img = draw_line(out_img, left_fitx, right_fitx, ploty)
-    # color=[255, 0, 0]
-    # thickness=2
-    # cv2.line(out_img, (left_fitx[0].astype(int), ploty[0].astype(int)),\
-    #  (left_fitx[-1].astype(int), ploty[-1].astype(int)), color, thickness)
-    # cv2.line(out_img, (right_fitx[0].astype(int), ploty[0].astype(int)),\
-    #  (right_fitx[-1].astype(int), ploty[-1].astype(int)), color, thickness)
+    # plot lines on the warped road image:
+    black_wraped = np.zeros_like(warped_road)
+    black_line_wraped = draw_line(black_wraped, left_fitx, right_fitx, ploty)
+    # plt.imshow(black_line_wraped)
+    # plt.title('black_line_wraped', fontsize=10)
+    # mpimg.imsave("black_line_wraped.png", black_line_wraped)
+    # plt.show()
 
-    return out_img, ploty, left_fitx, right_fitx, left_fit, right_fit
+    black_line_unwraped = unwarp(black_line_wraped, Minv, img_size)
+    # plt.imshow(black_line_unwraped)
+    # plt.title('black_line_unwraped', fontsize=10)
+    # mpimg.imsave("black_line_unwraped.png", black_line_unwraped)
+    # plt.show()
 
-def measure_curvature_real(ploty, left_fit_cr, right_fit_cr, ym_per_pix, xm_per_pix):
-    '''
-    Calculates the curvature of polynomial functions in meters.
-    '''
-    # Define y-value where we want radius of curvature
-    # We'll choose the maximum y-value, corresponding to the bottom of the image
-    y_eval = np.max(ploty)
-
-    # Calculation of R_curve (radius of curvature)
-    left_curverad = ((1 + (2*left_fit_cr[0]*y_eval*ym_per_pix + left_fit_cr[1])**2)**1.5) / np.absolute(2*left_fit_cr[0])
-    right_curverad = ((1 + (2*right_fit_cr[0]*y_eval*ym_per_pix + right_fit_cr[1])**2)**1.5) / np.absolute(2*right_fit_cr[0])
-
-    return left_curverad, right_curverad
-
-def measure_off_center_real(left_fit_cr_0, right_fit_cr_0, img_size_0,xm_per_pix):
-    lane_mid = (left_fit_cr_0 + right_fit_cr_0)/2
-    middle_img = img_size_0/2
-    car_off_center = (lane_mid - middle_img)*xm_per_pix
-
-    return car_off_center
-
-def unwarp(img, src, dst, img_size):
-
-    # Could compute the inverse by swapping the input parameters
-    Minv = cv2.getPerspectiveTransform(dst, src)
-
-    # creat warped image -uses linear interpolation
-    unwarped = cv2.warpPerspective(img, Minv, img_size,flags=cv2.INTER_LINEAR)
-
-    return unwarped
-
-def draw_line(out_img, left_fitx, right_fitx, ploty):
-    # only for 1d polynomial:
-    # color=[255, 255, 0]
-    # thickness=5
-    # cv2.line(out_img, (left_fitx[0].astype(int), ploty[0].astype(int)),\
-    #  (left_fitx[-1].astype(int), ploty[-1].astype(int)), color, thickness)
-    # cv2.line(out_img, (right_fitx[0].astype(int), ploty[0].astype(int)),\
-    #  (right_fitx[-1].astype(int), ploty[-1].astype(int)), color, thickness)
-
-    # for curved polynomials:
-    draw_points_left = (np.asarray([left_fitx, ploty]).T).astype(np.int32)   # needs to be int32 and transposed
-    draw_points_right = (np.asarray([right_fitx, ploty]).T).astype(np.int32)   # needs to be int32 and transposed
-    cv2.polylines(out_img, [draw_points_left], False, (255, 0,0),7)  # args: image, points, closed, color
-    cv2.polylines(out_img, [draw_points_right], False, (255, 0,0),7)  # args: image, points, closed, color
-
-    return out_img
-
-def search_around_poly(binary_warped, left_fit, right_fit,margin):
-    # HYPERPARAMETER
-    # Choose the width of the margin around the previous polynomial to search
-    # The quiz grader expects 100 here, but feel free to tune on your own!
-    margin = 100
-
-    # Grab activated pixels
-    nonzero = binary_warped.nonzero()
-    nonzeroy = np.array(nonzero[0])
-    nonzerox = np.array(nonzero[1])
-
-    ### TO-DO: Set the area of search based on activated x-values ###
-    ### within the +/- margin of our polynomial function ###
-    ### Hint: consider the window areas for the similarly named variables ###
-    ### in the previous quiz, but change the windows to our new search area ###
-    left_lane_inds = ((nonzerox > (left_fit[0]*(nonzeroy**2) + left_fit[1]*nonzeroy +
-                    left_fit[2] - margin)) & (nonzerox < (left_fit[0]*(nonzeroy**2) +
-                    left_fit[1]*nonzeroy + left_fit[2] + margin)))
-    right_lane_inds = ((nonzerox > (right_fit[0]*(nonzeroy**2) + right_fit[1]*nonzeroy +
-                    right_fit[2] - margin)) & (nonzerox < (right_fit[0]*(nonzeroy**2) +
-                    right_fit[1]*nonzeroy + right_fit[2] + margin)))
-
-    # Again, extract left and right line pixel positions
-    leftx = nonzerox[left_lane_inds]
-    lefty = nonzeroy[left_lane_inds]
-    rightx = nonzerox[right_lane_inds]
-    righty = nonzeroy[right_lane_inds]
-
-    # # Fit new polynomials
-    # left_fitx, right_fitx, ploty = fit_poly(binary_warped.shape, leftx, lefty, rightx, righty)
-
-    return leftx, lefty, rightx, righty, result #out_img
-
+    road_line = cv2.addWeighted(undist_road, 1., black_line_unwraped, 0.8, 0.)
+    # plt.imshow(road_line)
+    # plt.show()
+    # mpimg.imsave("road_line.png", road_line)#for readme
+    return road_line
+def visualize_perspective_transfor(undist_road, src):
+    # For fun: get perspective transform of the original road image
+    # plt.plot(src[0,0],src[0,1],'.')
+    # plt.plot(src[1,0],src[1,1],'.')
+    # plt.plot(src[2,0],src[2,1],'.')
+    #plt.plot(src[3,0],src[3,1],'.')
+    #plt.plot(dst[0,0],dst[0,1],'.')
+    #plt.plot(dst[1,0],dst[1,1],'.')
+    #plt.plot(dst[2,0],dst[2,1],'.')
+    #plt.plot(dst[3,0],dst[3,1],'.')
+    road_rectangale = cv2.line(undist_road, (src[0,0],src[0,1]), (src[1,0],src[1,1]), (0, 255, 0) , 2)
+    road_rectangale=cv2.line(road_rectangale, (src[3,0],src[3,1]), (src[2,0],src[2,1]), (0, 255, 0) , 2)
+    road_rectangale=cv2.line(road_rectangale, (src[0,0],src[0,1]), (src[3,0],src[3,1]), (0, 255, 0) , 2)
+    road_rectangale=cv2.line(road_rectangale, (src[1,0],src[1,1]), (src[2,0],src[2,1]), (0, 255, 0) , 2)
+    return road_rectangale
 def Lane_Finding_Pipeline_Image_Advanced(image_road):
-
+    """    Main pipline to detect lane lines"""
     # data = np.load('calib_info.npz')
     # mtx = data['mtx']
     # dist = data['dist']
@@ -309,8 +378,6 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     [0.00000000, 1.15282217*10**3, 3.86124583*10**2],\
     [0.0000000, 0.00000000, 1.00000000]])
     dist = np.float32([[-0.24688507, -0.02373155 ,-0.00109831,  0.00035107, -0.00259868]])
-
-    #TODO: write the matrices here
 
     # undist_roadorting the test image_road:
     undist_road = cv2.undistort(image_road, mtx, dist, None, mtx)
@@ -328,9 +395,9 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     # Note: img is the undistorted image
     img = np.copy(undist_road)
 
-    sx_binary = grad_thresh(img, thresh=(40,100))#20, 100
-    s_binary = colorHSV_thresh(img, thresh=(170,255))
-    R_binary = colorBGR_thresh(img, thresh=(220,255))#240,255
+    sx_binary = grad_thresh(img, thresh=(10,100))#20, 100
+    s_binary = colorHSV_thresh(img, thresh=(125,255))
+    R_binary = colorBGR_thresh(img, thresh=(200,255))#240,255
     # Stack each channel to view their individual contributions in green and blue respectively
     # This returns a stack of the two binary images, whose components you can see as different colors
     # color_binary = np.dstack(( np.zeros_like(sx_binary), sx_binary, s_binary)) * 255
@@ -350,7 +417,6 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     # ax4.imshow(combined_binary)
     # ax4.set_title('grad & color combined', fontsize=10)
     # plt.subplots_adjust(left=0., right=1, top=0.9, bottom=0.)
-    # mpimg.imsave("cmbined_binary.png", combined_binary)#for readme
     # plt.show()
 
     # Define calibration box in source (original) and destination
@@ -371,59 +437,57 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     [(img_size[0] * 3 / 4), img_size[1]],
     [(img_size[0] * 3 / 4), 0]])
 
-    # For fun: get perspective transform of the original road image
-    # plt.plot(src[0,0],src[0,1],'.')
-    # plt.plot(src[1,0],src[1,1],'.')
-    # plt.plot(src[2,0],src[2,1],'.')
-    #plt.plot(src[3,0],src[3,1],'.')
-    #plt.plot(dst[0,0],dst[0,1],'.')
-    #plt.plot(dst[1,0],dst[1,1],'.')
-    #plt.plot(dst[2,0],dst[2,1],'.')
-    #plt.plot(dst[3,0],dst[3,1],'.')
-    # road_rectangale=cv2.line(undist_road, (src[0,0],src[0,1]), (src[1,0],src[1,1]), (0, 255, 0) , 2)
-    # road_rectangale=cv2.line(road_rectangale, (src[3,0],src[3,1]), (src[2,0],src[2,1]), (0, 255, 0) , 2)
-    # road_rectangale=cv2.line(road_rectangale, (src[0,0],src[0,1]), (src[3,0],src[3,1]), (0, 255, 0) , 2)
-    # road_rectangale=cv2.line(road_rectangale, (src[1,0],src[1,1]), (src[2,0],src[2,1]), (0, 255, 0) , 2)
-    # plt.imshow(road_rectangale)
-    # plt.title('road with rectangle', fontsize=10)
-    # mpimg.imsave("image_rectangale.png", road_rectangale)#for readme
-    # plt.show()
 
-    warped_road = warp(undist_road, src, dst, img_size)
-    # plt.imshow(warped_road)
-    # plt.title('warped road with rectangle', fontsize=10)
-    # mpimg.imsave("warped_road.png", warped_road)#for readme
-    # plt.show()
 
     # get perspective transform of the binary image
-    binary_warped = warp(combined_binary, src, dst, img_size)
+    binary_warped, M, Minv = warp(combined_binary, src, dst, img_size)
     # plt.imshow(binary_warped)
     # plt.title('binary warped (original to pixel)', fontsize=10)
     # mpimg.imsave("binary_warped.png", binary_warped)
     # plt.show()
 
+    ## VISULAIZE ROAD:
+    undist_road_temp = np.copy(undist_road)
+    road_rectangale = visualize_perspective_transfor(undist_road_temp, src)
+    plt.imshow(road_rectangale)
+    plt.title('road with rectangle', fontsize=10)
+    mpimg.imsave("road_rectangale.png", road_rectangale)#for readme
+    plt.show()
+    road_rectangale_warped, M, Minv = warp(road_rectangale, src, dst, img_size)
+    plt.imshow(road_rectangale_warped)
+    plt.title('road_rectangale_warped', fontsize=10)
+    mpimg.imsave("road_rectangale_warped.png", road_rectangale_warped)#for readme
+    plt.show()
+
     #TODO: write the if condition:
     margin_around_line = 100
     # if not left_fit:
     # Find our lane pixels first
-    leftx, lefty, rightx, righty, binary_warped_pixel, left_lane_inds, right_lane_inds,nonzeroy, nonzerox = find_lane_pixels(binary_warped)
-    # plt.imshow(binary_warped_pixel)
-    # plt.title('binary warped pixel', fontsize=10)
-    # mpimg.imsave("binary_warped_pixel.png", binary_warped_pixel)
+    leftx, lefty, rightx, righty, binary_warped_window,\
+    left_lane_inds, right_lane_inds,nonzeroy, nonzerox \
+    = find_lane_pixels(binary_warped)
+
+    # plt.imshow(binary_warped_window)
+    # plt.title('binary_warped_window', fontsize=10)
+    # mpimg.imsave("binary_warped_window.png", binary_warped_window)
+    # plt.show()
+
+    binary_warped_window_pixel = visualize_detected_pixels(binary_warped_window, lefty, leftx, righty, rightx)
+    # plt.imshow(binary_warped_window_pixel)
+    # plt.title('binary_warped_window_pixel', fontsize=10)
     # plt.show()
 
     # Fit a polynomial
-    binary_warped_line, ploty, left_fitx, right_fitx, left_fit, right_fit = fit_polynomial(binary_warped_pixel, leftx, lefty, rightx, righty, binary_warped.shape[0])
-    # plt.imshow(binary_warped_line)
-    # plt.title('binary warped line', fontsize=10)
+    ploty, left_fitx, right_fitx, left_fit, right_fit \
+    = fit_polynomial(leftx, lefty, rightx, righty, binary_warped.shape[0])
+
+    binary_warped_window_pixel_line = draw_line(binary_warped_window_pixel, left_fitx, right_fitx, ploty)
+    # plt.imshow(binary_warped_window_pixel_line)
+    # plt.title('binary_warped_window_pixel_line', fontsize=10)
     # plt.show()
-    # mpimg.imsave("binary_warped_line.png", binary_warped_line)# for readme
+
+
     #print(left_fit)
-    # binary_warped_line = visualize_region(binary_warped, left_lane_inds, right_lane_inds, left_fitx, right_fitx,margin_around_line, ploty,nonzeroy, nonzerox)
-    # plt.imshow(binary_warped_line)
-    # plt.title('binary warped line', fontsize=10)
-    # plt.show()
-    # mpimg.imsave("binary_warped_line.png", binary_warped_line)# for readme
     # else:
     #     leftx, lefty, rightx, righty, binary_warped_pixel = search_around_poly(binary_warped, left_fit, right_fit, margin_around_line)
     #     # plt.imshow(binary_warped_pixel)
@@ -431,47 +495,14 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     #     # mpimg.imsave("binary_warped_pixel.png", binary_warped_pixel)
     #     # plt.show()
     #     # Fit a polynomial
-    #     binary_warped_line, ploty, left_fitx, right_fitx, left_fit, right_fit = fit_polynomial(binary_warped_pixel, leftx, lefty, rightx, righty, binary_warped.shape[0])
-    #     # plt.imshow(binary_warped_line)
-    #     # plt.title('binary warped line (search around)', fontsize=10)
+    #     ploty, left_fitx, right_fitx, left_fit, right_fit = fit_polynomial(binary_warped_pixel, leftx, lefty, rightx, righty, binary_warped.shape[0])
+    #     #print(left_fit)
+    #     # visualize_region_search_around_poly(binary_warped, left_lane_inds, right_lane_inds, left_fitx, right_fitx, ploty):
+    #     # uuwarped_binary = unwarp(binary_warped_line, Minv, img_size)
+    #     # plt.imshow(uuwarped_binary)
+    #     # plt.title('unwarped binary', fontsize=10)
+    #     # mpimg.imsave("uuwarped_binary.png", uuwarped_binary)
     #     # plt.show()
-    #     # mpimg.imsave("binary_warped_line.png", binary_warped_line)# for readme
-    #     print(left_fit)
-    #     # visualize_region(binary_warped, left_lane_inds, right_lane_inds, left_fitx, right_fitx, ploty):
-
-
-    uuwarped_binary = unwarp(binary_warped_line, src, dst, img_size)
-    # plt.imshow(uuwarped_binary)
-    # plt.title('unwarped binary', fontsize=10)
-    # mpimg.imsave("uuwarped_binary.png", uuwarped_binary)
-    # plt.show()
-
-    #black_wraped = np.zeros_like(binary_warped)
-    #black_region_wraped = visualize_region(black_wraped, left_lane_inds, right_lane_inds, left_fitx, right_fitx, margin_around_line, ploty, nonzeroy, nonzerox)
-    # plt.imshow(black_region_wraped)
-    # plt.title('black_region_wraped', fontsize=10)
-    # mpimg.imsave("black_region_wraped.png", black_region_wraped)
-    # plt.show()
-
-    #black_region_unwraped = unwarp(black_region_wraped, src, dst, img_size)
-    # plt.imshow(black_region_unwraped)
-    # plt.title('black_region_unwraped', fontsize=10)
-    # mpimg.imsave("black_region_unwraped.png", black_region_unwraped)
-    # plt.show()
-
-    # plot lines on the warped road image:
-    black_wraped = np.zeros_like(warped_road)
-    black_line_wraped = draw_line(black_wraped, left_fitx, right_fitx, ploty)
-    # plt.imshow(black_line_wraped)
-    # plt.title('black_line_wraped', fontsize=10)
-    # mpimg.imsave("black_line_wraped.png", black_line_wraped)
-    # plt.show()
-
-    black_line_unwraped = unwarp(black_line_wraped, src, dst, img_size)
-    # plt.imshow(black_line_unwraped)
-    # plt.title('black_line_unwraped', fontsize=10)
-    # mpimg.imsave("black_line_unwraped.png", black_line_unwraped)
-    # plt.show()
 
     # Define conversions in x and y from pixels space to meters
     ym_per_pix = 30/720 # meters per pixel in y dimension
@@ -483,7 +514,7 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     #calculate average of curvature raduis
     R_curve = (left_curverad + right_curverad)/2
 
-    # calculate the how much in meters the car is off center form the middle of the lane
+    # calculate car offset from center of lane
     car_off_center = measure_off_center_real(left_fitx[0], right_fitx[0], img_size[0],xm_per_pix)
 
     text_R = '{} meters raduis of curvature'.format(round(R_curve,2))
@@ -497,26 +528,22 @@ def Lane_Finding_Pipeline_Image_Advanced(image_road):
     #                    1, (255, 0, 0), 2, cv2.LINE_AA)
     # cv2.putText(undist_road, text_R, (50, 100), cv2.FONT_HERSHEY_SIMPLEX,
     #                   1, (255, 0, 0), 2, cv2.LINE_AA)
-    # Create a "color" binary image to combine with line image
-    road_line = cv2.addWeighted(undist_road, 1., black_line_unwraped, 0.8, 0.)
-    # plt.imshow(road_line)
-    # plt.show()
-    # mpimg.imsave("road_line.png", road_line)#for readme
 
-    #road_region = cv2.addWeighted(undist_road, 1., black_region_unwraped, 0.8, 0.)
-    # plt.imshow(road_region)
-    # plt.show()
-    # mpimg.imsave("road_region.png", road_region)#for readme
+    road_window = visualize_window_serach(binary_warped_window_pixel_line, undist_road,Minv, img_size )
+    road_lines = visualize_lines(undist_road, src, dst, img_size,left_fitx, right_fitx, ploty )
+    road_lane = visualize_lane(binary_warped,undist_road, ploty, left_fitx, right_fitx, Minv, img_size)
 
-    # for troubleshooting:#undist_road
-    road_box = cv2.addWeighted(road_line, 1., uuwarped_binary, 0.8, 0.)
-    #plt.imshow(road_box)
-    # plt.show()
-    # mpimg.imsave("road_box.png", road_box)#for readme
+    result = road_window
 
-    result = road_box#road_line
+    mpimg.imsave("road_undistorted.png", undist_road)
+    mpimg.imsave("sx_binary.png", sx_binary)
+    mpimg.imsave("s_binary.png", s_binary)
+    mpimg.imsave("R_binary.png", R_binary)
+    mpimg.imsave("cmbined_binary.png", combined_binary)
+    mpimg.imsave("binary_warped_window_pixel.png", binary_warped_window_pixel)
+    mpimg.imsave("binary_warped_window_pixel_line.png", binary_warped_window_pixel_line)# for readme
 
-    return result
+    return road_lane
 
 """
 cv2.destroyAllWindows()
@@ -543,15 +570,15 @@ for fname in images:
 
 cv2.destroyAllWindows()# destroys the window showing image
 """
-"""
-image_path = '../test_images/test9.jpg'
-image = cv2.imread(image_path)
-result = Lane_Finding_Pipeline_Image_Advanced(image)
-plt.imshow(result)
-plt.show()
-mpimg.imsave("frame3.png", result)
-"""
 
+image_path = '../test_images/straight_lines1.jpg'
+image = cv2.imread(image_path)
+road_lane = Lane_Finding_Pipeline_Image_Advanced(image)
+plt.imshow(road_lane)
+plt.show()
+mpimg.imsave("road_lane.png", road_lane)#for readme
+
+"""
 # Import everything needed to edit/save/watch video clips
 from moviepy.editor import VideoFileClip
 from IPython.display import HTML
@@ -571,3 +598,4 @@ clip1 = VideoFileClip("../project_video.mp4")#.subclip(0,2)
 # clip1 = VideoFileClip("../harder_challenge_video.mp4")#.subclip(0,2)
 clip = clip1.fl_image(Lane_Finding_Pipeline_Image_Advanced) #NOTE: this function expects color images!!
 clip.write_videofile(video_out, audio=False)
+"""
