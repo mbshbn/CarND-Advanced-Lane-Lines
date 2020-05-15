@@ -13,13 +13,6 @@ The goals / steps of this project are the following:
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
 
-[//]: # (Image References)
-[image2]: ./output_images/road_undistorted.png "Undistorted_road"
-[image3]: ./output_images/combined_binary.png "binary threshhold"
-[image4]: ./output_images/image_rectangale.png "image_rectangale"
-[image5]: ./output_images/warped_road.png "warped_image"
-[image6]: ./output_images/binary_warped_line.jpg "Road yellow line"
-
 [video1]: ./project_video.mp4 "Video"
 
 
@@ -117,6 +110,9 @@ This resulted in the following source and destination points:
 | 695, 460      | 960, 0        |
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
+
+[image4]: ./output_images/image_rectangale.png "image_rectangale"
+[image5]: ./output_images/warped_road.png "warped_image"
 
 Original image             |  undistorted image
 :-------------------------:|:-------------------------:
