@@ -111,8 +111,8 @@ This resulted in the following source and destination points:
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-[image4]: ./output_images/image_rectangale.png "image_rectangale"
-[image5]: ./output_images/warped_road.png "warped_image"
+[image4]: ./output_images/road_rectangale.png 
+[image5]: ./output_images/road_rectangale_warped.png 
 
 Original image             |  undistorted image
 :-------------------------:|:-------------------------:
