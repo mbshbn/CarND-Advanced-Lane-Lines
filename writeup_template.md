@@ -34,7 +34,7 @@ I also save these two matrixes using `np.savez` such that I can use them later.
 Then, I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
 
 [image0]: ./camera_cal/test_image.jpg "distorted"
-[image1]: ./for_readme/output_images/chessboard_undistorted.png "Undistorted_board"
+[image1]: ./output_images/for_readme/chessboard_undistorted.png "Undistorted_board"
 
 Original image             |  undistorted image
 :-------------------------:|:-------------------------:
