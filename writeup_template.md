@@ -74,7 +74,7 @@ Then, I created the binary image `np.zeros_like`, and applied the threshold on t
 [image21]: ./output_images/for_readme/s_binary.png 
 [image22]: ./output_images/for_readme/R_binary.png 
 
-Gradient threshhold           |  S threshhold (HSV) |  R threshhold from (RGB)
+Gradient threshhold, thresh= (10,100)          |  S threshhold (HSV), thresh= (125,255) |  R threshhold from (RGB), thresh =(200,255)
 :-------------------------:|:-------------------------:|:-------------------------:
 ![alt text][image20]  |  ![alt text][image21] | ![alt text][image22]
 
@@ -132,6 +132,7 @@ First, the histogram of the bottom half of the image along the vertical axis is 
 
 Then the peaks in the left half side and right half side of the histogram are computed as the initial estimate of the left and right lines respectively.
 Then, the number of sliding windows `nwindows` and horizontal margin `margin` and the minimum number of pixels `minpix` are specified.
+I set 'nwindows = 9,margin = 100,minpix = 100`
 
 Then to recognize the left and right lines pixel positions, I defined a `for` loop.
 To optimize the search process, at every iteration, the horizontal position of the center of the left and right windows is passed to the next iteration to fid the boundaries of the next window.
