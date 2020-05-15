@@ -7,20 +7,11 @@ The goals / steps of this project are the following:
 * Use color transforms, gradients, etc., to create a thresholded binary image.
 * Apply a perspective transform to rectify binary image ("birds-eye view").
 * Detect lane pixels and fit to find the lane boundary.
-* (To optimize: Only for videos after analyzing the first image) Detect lane pixels around the detected line. 
+* (To optimize: Only for videos after analyzing the first image) Detect lane pixels around the detected line of the previous image. 
 * Determine the curvature of the lane and vehicle position with respect to the center.
 * Warp the detected lane boundaries back onto the original image.
 * Output visual display of the lane boundaries and numerical estimation of lane curvature and vehicle position.
 
-
-[//]: # (Image References)
-[image0]: ./camera_cal/test_image.jpg "distorted"
-[image1]: ./output_images/chessboard_undistorted.png "Undistorted_board"
-[image2]: ./output_images/road_undistorted.png "Undistorted_road"
-[image3]: ./output_images/combined_binary.png "binary threshhold"
-[image4]: ./output_images/image_rectangale.png "image_rectangale"
-[image5]: ./output_images/warped_road.png "warped_image"
-[image6]: ./output_images/binary_warped_line.jpg "Road yellow line"
 
 [video1]: ./project_video.mp4 "Video"
 
@@ -42,6 +33,9 @@ I then used the output `objpoints` and `imgpoints` to compute the camera calibra
 I also save these two matrixes using `np.savez` such that I can use them later. 
 Then, I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result:
 
+[image0]: ./camera_cal/test_image.jpg "distorted"
+[image1]: ./output_images/chessboard_undistorted.png "Undistorted_board"
+
 Original image             |  undistorted image
 :-------------------------:|:-------------------------:
 ![alt text][image0]  |  ![alt text][image1] 
@@ -55,7 +49,13 @@ Initially, it loads `mtx`, and `dist` matrices from the camera calibration step.
 
 Using the saved `mtx`, `dist` from calibration, I have undistorted an image from a road:
 
-<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/road_undistorted.png"></p>
+[image10]: ./test_images/straight_lines1.jpg 
+[image20]: ./output_images/road_undistorted.png 
+
+Original image             |  undistorted image
+:-------------------------:|:-------------------------:
+![alt text][image10]  |  ![alt text][image20]
+
 
 #### 2. Create a thresholded binary image using color transforms and gradients.
 
@@ -72,7 +72,16 @@ In the end, to generate the binary mage, I used `np.zeros_like`, and applied the
 
 For color threshhold, the code includes a function called `color_thresh`. I used HLS colorspace using `cv2.cvtColor(img, cv2.COLOR_BGR2HLS)`. 
 (Why? because yellow and white colors can be detected well in S space). 
-Then, I created the binary image `np.zeros_like`, and applied the threshold on the S channel.
+Then, I created the binary image `np.zeros_like`, and applied the threshold on the S channel. Also, I have applied threshhold on R space in RGB colorspace. The results are as follwos:
+
+[image20]: ./output_images/sx_binary.png 
+[image21]: ./output_images/s_binary.png 
+[image22]: ./output_images/R_binary.png 
+
+Gradient threshhold           |  S threshhold (HSV) |  R threshhold from (RGB)
+:-------------------------:|:-------------------------:|:-------------------------:
+![alt text][image20]  |  ![alt text][image21] | ![alt text][image22]
+
 
 In the end, I have combined the two binary thresholds, and here is an example of my output for this step.
 
@@ -108,6 +117,9 @@ This resulted in the following source and destination points:
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
+[image4]: ./output_images/road_rectangale.png 
+[image5]: ./output_images/road_rectangale_warped.png 
+
 Original image             |  undistorted image
 :-------------------------:|:-------------------------:
 ![alt text][image4]  |  ![alt text][image5] 
@@ -142,7 +154,15 @@ To plot them on the image, I use `plt.plot`. Also, I visualize the whole left an
 
 The output of the last function is the following figure:
 
-<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/road_box.png"></p>
+
+[image410]: ./output_images/binary_warped_window_pixel_line.png 
+[image420]: ./output_images/road_window.png 
+
+
+Binary image             |  Road image
+:-------------------------:|:-------------------------:
+![alt text][image410]  |  ![alt text][image420] 
+
 
 #### 4.2  Detect lane pixels around the detected line. (To optimize: Only for videos after analyzng the first image) 
 
@@ -152,7 +172,6 @@ The input is the polynomial coefficient of the previous image, and a margin to r
 (Why? Because the lane lines do not usually jump! )
 The output for this section is as follows:
 
-<p align="center">  <img width="460/1.5" height="300/1.5" src="./output_images/road_region.png"></p>
 
 #### 5. Calculate the radius of curvature of the lane and the position of the vehicle with respect to center.
 
@@ -172,7 +191,7 @@ These two numbers are plotted on the images using `cv2.putText`.
 I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  
 Here is an example of my result on a test image:
 
-<p align="center">  <img width="460/3" height="300/3" src="./output_images/road_line.png"></p>
+<p align="center">  <img width="460/3" height="300/3" src="./output_images/road_lane.png"></p>
 
 ---
 
