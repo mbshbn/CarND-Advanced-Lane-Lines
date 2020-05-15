@@ -207,4 +207,8 @@ Here's a [link to my video result](https://youtu.be/VKiiWAdeca0)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+The problem arises when the color of pavement changes or the shades of trees appears on the pavement. Also, the vertical colors on the pavements distract from the lane lines. this should be resolved when a class is defined and search around poly activated for the video. Also, a sanity check after the detection of lines will improve the code:
+* Checking that they have similar curvature
+* Checking that they are separated by approximately the right distance horizontally
+* Checking that they are roughly parallel
+
